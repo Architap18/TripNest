@@ -1,5 +1,7 @@
 
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 import {
   Mail,
   Lock,
@@ -10,25 +12,59 @@ import {
 import "./AuthPage.css";
 
 function AuthPage() {
-  const [isLogin, setIsLogin] = useState(true);
-  const [showPassword, setShowPassword] = useState(false);
+    const navigate = useNavigate();
+    const { login, register } = useAuth();
 
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-  });
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
+    const [isLogin, setIsLogin] = useState(true);
+    const [showPassword, setShowPassword] = useState(false);
+
+    const [form, setForm] = useState({
+        name: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
+    });
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log(isLogin ? "Login details:" : "Signup details:", form);
-  };
+  const handleSubmit = async (e) => {
+  e.preventDefault();
 
+  console.log("FORM SUBMITTED!");
+  console.log("Current mode:", isLogin ? "Login" : "Signup");
+
+  setError("");
+
+  if (!isLogin && form.password !== form.confirmPassword) {
+    setError("Passwords do not match");
+    return;
+  }
+
+  try {
+    setLoading(true);
+
+    if (isLogin) {
+      await login(form.email, form.password);
+    } else {
+      await register(form.name, form.email, form.password);
+    }
+
+    console.log("API SUCCESS");
+
+    navigate("/dashboard");
+
+  } catch (error) {
+    console.error("API ERROR:", error);
+    setError(error.message);
+
+  } finally {
+    setLoading(false);
+  }
+};
   return (
     <main className="auth-container">
       {/* LEFT SECTION */}
@@ -84,7 +120,10 @@ function AuthPage() {
             <button
               type="button"
               className={isLogin ? "selected" : ""}
-              onClick={() => setIsLogin(true)}
+              onClick={() => {
+                setIsLogin(true);
+                setError("");
+              }}
             >
               Login
             </button>
@@ -92,7 +131,10 @@ function AuthPage() {
             <button
               type="button"
               className={!isLogin ? "selected" : ""}
-              onClick={() => setIsLogin(false)}
+              onClick={() => {
+                setIsLogin(false);
+                setError("");
+              }}
             >
               Sign Up
             </button>
@@ -106,6 +148,8 @@ function AuthPage() {
                 : "Join TripNest and start planning your next adventure."}
             </p>
           </div>
+
+          {error && <div className="auth-error">{error}</div>}
 
           <form onSubmit={handleSubmit}>
             {!isLogin && (
@@ -168,9 +212,18 @@ function AuthPage() {
               </div>
             )}
 
-            <button type="submit" className="auth-submit">
-              {isLogin ? "Login" : "Create Account"}
-              <ArrowRight size={19} />
+            <button
+                    type="submit"
+                    className="auth-submit"
+                    disabled={loading}
+                    >
+                    {loading
+                        ? "Please wait..."
+                        : isLogin
+                        ? "Login"
+                        : "Create Account"}
+
+                    {!loading && <ArrowRight size={19} />}
             </button>
           </form>
 

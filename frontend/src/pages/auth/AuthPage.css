@@ -439,3 +439,13 @@
     left: 6%;
   }
 }
+
+.auth-error {
+  color: #dc2626;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  padding: 12px;
+  border-radius: 9px;
+  margin-bottom: 16px;
+  font-size: 14px;
+}
