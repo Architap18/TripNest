@@ -18,4 +18,151 @@ model User {
   password  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  ownedTrips       Trip[]         @relation("TripOwner")
+  tripMemberships  TripMember[]
+  createdItinerary ItineraryItem[]
+  savedPlaces      SavedPlace[]
+  expenses         Expense[]
+  activities       Activity[]
+}
+enum TripStatus {
+  PLANNING
+  UPCOMING
+  ONGOING
+  COMPLETED
+  CANCELLED
+}
+
+enum MemberRole {
+  OWNER
+  EDITOR
+  VIEWER
+}
+
+enum ExpenseCategory {
+  TRANSPORT
+  ACCOMMODATION
+  FOOD
+  ACTIVITIES
+  SHOPPING
+  OTHER
+}
+model Trip {
+  id          String     @id @default(uuid())
+  title       String
+  destination String
+  description String?
+  coverImage  String?
+  startDate   DateTime
+  endDate     DateTime
+  budget      Decimal?   @db.Decimal(12, 2)
+  currency    String     @default("INR")
+  status      TripStatus @default(PLANNING)
+
+  ownerId   String
+  owner     User         @relation("TripOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  members   TripMember[]
+  itinerary ItineraryItem[]
+  expenses  Expense[]
+  activities Activity[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([ownerId])
+  @@index([startDate])
+}
+
+model TripMember {
+  id       String     @id @default(uuid())
+  role     MemberRole @default(VIEWER)
+
+  tripId String
+  userId String
+
+  trip Trip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  joinedAt DateTime @default(now())
+
+  @@unique([tripId, userId])
+  @@index([userId])
+}
+
+
+model ItineraryItem {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  location    String?
+  dateTime    DateTime
+  duration    Int?
+  category    String?
+  sortOrder   Int      @default(0)
+
+  tripId String
+  trip   Trip   @relation(fields: [tripId], references: [id], onDelete: Cascade)
+
+  createdById String?
+  createdBy   User? @relation(fields: [createdById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tripId, dateTime])
+}
+
+
+model SavedPlace {
+  id          String   @id @default(uuid())
+  name        String
+  destination String
+  description String?
+  imageUrl    String?
+  createdAt   DateTime @default(now())
+
+  userId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, name, destination])
+  @@index([userId])
+}
+
+
+model Expense {
+  id          String          @id @default(uuid())
+  title       String
+  amount      Decimal         @db.Decimal(12, 2)
+  category    ExpenseCategory @default(OTHER)
+  description String?
+  spentAt     DateTime        @default(now())
+
+  tripId String
+  trip   Trip   @relation(fields: [tripId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tripId])
+  @@index([userId])
+}
+
+
+model Activity {
+  id        String   @id @default(uuid())
+  action    String
+  details   String?
+  createdAt DateTime @default(now())
+
+  userId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  tripId String?
+  trip   Trip? @relation(fields: [tripId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
 }
