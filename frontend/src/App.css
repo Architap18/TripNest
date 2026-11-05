@@ -1,25 +1,46 @@
+* {
+  box-sizing: border-box;
+}
+
+html {
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+  scroll-behavior: smooth;
+}
+
+body {
+  width: 100%;
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  font-family: Arial, sans-serif;
+}
+
 #root {
   width: 100%;
   min-height: 100vh;
-  max-width: none;
   margin: 0;
   padding: 0;
 }
 
-html,
-body {
-  width: 100%;
-  min-height: 100vh;
-  margin: 0;
-  padding: 0;
+/* Remove default link styling */
+a {
+  text-decoration: none;
 }
 
-body {
-  overflow-x: hidden;
+/* Form elements inherit application fonts */
+button,
+input,
+textarea,
+select {
+  font: inherit;
 }
 
-.auth-container {
-  width: 100%;
-  min-height: 100vh;
-  margin: 0;
+/* Images remain responsive */
+img {
+  max-width: 100%;
 }
