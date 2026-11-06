@@ -350,9 +350,6 @@
   }
 }
 
-/* =========================================
-   5. COMMON SECTION STYLES
-========================================= */
 
 .tripnest-section {
   margin-top: 65px;
@@ -399,10 +396,6 @@
   font-size: 13px;
   font-weight: 700;
 }
-
-/* =========================================
-   6. FOUR HORIZONTAL QUICK ACTION CARDS
-========================================= */
 
 .tripnest-quick-grid {
   display: grid;
@@ -480,10 +473,6 @@
   flex-shrink: 0;
 }
 
-/* =========================================
-   7. THREE-COLUMN WORKSPACE
-========================================= */
-
 .tripnest-workspace-grid {
   display: grid;
   grid-template-columns: 1.25fr 1fr 0.95fr;
@@ -538,7 +527,6 @@
   white-space: nowrap;
 }
 
-/* UPCOMING TRIPS */
 
 .tripnest-trip-list {
   display: flex;
@@ -607,7 +595,6 @@
   border-top: 1px solid #f1edf7;
 }
 
-/* MY ITINERARY */
 
 .tripnest-itinerary-summary {
   display: flex;
@@ -716,8 +703,6 @@
   white-space: nowrap;
 }
 
-/* TRIP CALENDAR */
-
 .tripnest-calendar-heading {
   display: flex;
   justify-content: space-between;
@@ -799,10 +784,6 @@
   border-radius: 50%;
 }
 
-/* =========================================
-   8. POPULAR DESTINATIONS
-========================================= */
-
 .tripnest-destination-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -883,10 +864,6 @@
   font-weight: 700;
 }
 
-/* =========================================
-   9. RECENT ACTIVITY
-========================================= */
-
 .tripnest-activity-panel {
   padding: 8px 22px;
   border: 1px solid var(--border);
@@ -937,10 +914,6 @@
   font-size: 10px;
   white-space: nowrap;
 }
-
-/* =========================================
-   10. OPTIONAL AI SECTION
-========================================= */
 
 .tripnest-ai-banner {
   min-height: 240px;
@@ -1012,9 +985,6 @@
   color: #8968db;
 }
 
-/* =========================================
-   11. FOOTER
-========================================= */
 
 .tripnest-footer {
   min-height: 75px;
@@ -1037,9 +1007,6 @@
   font-size: 11px;
 }
 
-/* =========================================
-   12. TABLET RESPONSIVENESS
-========================================= */
 
 @media (max-width: 1150px) {
   .tripnest-workspace-grid {
@@ -1055,9 +1022,6 @@
   }
 }
 
-/* =========================================
-   13. MOBILE RESPONSIVENESS
-========================================= */
 
 @media (max-width: 700px) {
   .tripnest-navbar {
@@ -1199,9 +1163,6 @@
   }
 }
 
-/* =========================================
-   14. SMALL MOBILE SCREENS
-========================================= */
 
 @media (max-width: 390px) {
   .tripnest-brand {
@@ -1227,5 +1188,212 @@
 
   .tripnest-trip-status {
     font-size: 8px;
+  }
+}
+
+
+
+.tripnest-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 10px;
+  padding: 30px 15px;
+  color: var(--primary);
+}
+
+.tripnest-empty-state h3 {
+  margin: 0;
+  color: var(--dark);
+  font-size: 15px;
+}
+
+.tripnest-empty-state p {
+  margin: 0;
+  max-width: 280px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.tripnest-empty-state button,
+.tripnest-empty-state a {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 8px;
+  padding: 10px 16px;
+  border: 0;
+  border-radius: 25px;
+  background: var(--primary);
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.tripnest-error-message {
+  color: #d04455;
+  font-size: 13px;
+}
+
+.tripnest-quick-card:where(button) {
+  width: 100%;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.tripnest-hero-button {
+  border: none;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+
+.tripnest-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(20, 16, 38, 0.58);
+  backdrop-filter: blur(5px);
+}
+
+.tripnest-create-modal {
+  width: min(560px, 100%);
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 30px;
+  border-radius: 20px;
+  background: white;
+  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.2);
+}
+
+.tripnest-modal-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+.tripnest-modal-heading h2 {
+  margin: 8px 0;
+  color: var(--dark);
+  font-size: 25px;
+}
+
+.tripnest-modal-heading p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.tripnest-modal-heading > button {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: #f3effa;
+  color: var(--dark);
+  cursor: pointer;
+}
+
+.tripnest-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 17px;
+}
+
+.tripnest-form-group label {
+  color: var(--dark);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.tripnest-form-group input,
+.tripnest-form-group textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #e7e1f0;
+  border-radius: 10px;
+  outline: none;
+  background: #fcfbfe;
+  color: var(--dark);
+  font-family: inherit;
+  font-size: 13px;
+}
+
+.tripnest-form-group input:focus,
+.tripnest-form-group textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(105, 69, 219, 0.1);
+}
+
+.tripnest-form-group textarea {
+  resize: vertical;
+}
+
+.tripnest-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.tripnest-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 25px;
+}
+
+.tripnest-cancel-button,
+.tripnest-submit-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-radius: 25px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.tripnest-cancel-button {
+  border: 1px solid #e7e1f0;
+  background: white;
+  color: var(--dark);
+}
+
+.tripnest-submit-button {
+  border: none;
+  background: var(--primary);
+  color: white;
+}
+
+.tripnest-submit-button:disabled,
+.tripnest-cancel-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 500px) {
+  .tripnest-create-modal {
+    padding: 22px;
+  }
+
+  .tripnest-form-row {
+    grid-template-columns: 1fr;
+    gap: 0;
   }
 }

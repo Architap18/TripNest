@@ -19,13 +19,14 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  ownedTrips       Trip[]         @relation("TripOwner")
+  ownedTrips       Trip[]          @relation("TripOwner")
   tripMemberships  TripMember[]
   createdItinerary ItineraryItem[]
   savedPlaces      SavedPlace[]
   expenses         Expense[]
   activities       Activity[]
 }
+
 enum TripStatus {
   PLANNING
   UPCOMING
@@ -48,6 +49,7 @@ enum ExpenseCategory {
   SHOPPING
   OTHER
 }
+
 model Trip {
   id          String     @id @default(uuid())
   title       String
@@ -60,11 +62,11 @@ model Trip {
   currency    String     @default("INR")
   status      TripStatus @default(PLANNING)
 
-  ownerId   String
-  owner     User         @relation("TripOwner", fields: [ownerId], references: [id], onDelete: Cascade)
-  members   TripMember[]
-  itinerary ItineraryItem[]
-  expenses  Expense[]
+  ownerId    String
+  owner      User            @relation("TripOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  members    TripMember[]
+  itinerary  ItineraryItem[]
+  expenses   Expense[]
   activities Activity[]
 
   createdAt DateTime @default(now())
@@ -75,8 +77,8 @@ model Trip {
 }
 
 model TripMember {
-  id       String     @id @default(uuid())
-  role     MemberRole @default(VIEWER)
+  id   String     @id @default(uuid())
+  role MemberRole @default(VIEWER)
 
   tripId String
   userId String
@@ -89,7 +91,6 @@ model TripMember {
   @@unique([tripId, userId])
   @@index([userId])
 }
-
 
 model ItineraryItem {
   id          String   @id @default(uuid())
@@ -105,14 +106,13 @@ model ItineraryItem {
   trip   Trip   @relation(fields: [tripId], references: [id], onDelete: Cascade)
 
   createdById String?
-  createdBy   User? @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdBy   User?   @relation(fields: [createdById], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([tripId, dateTime])
 }
-
 
 model SavedPlace {
   id          String   @id @default(uuid())
@@ -123,12 +123,11 @@ model SavedPlace {
   createdAt   DateTime @default(now())
 
   userId String
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, name, destination])
   @@index([userId])
 }
-
 
 model Expense {
   id          String          @id @default(uuid())
@@ -151,7 +150,6 @@ model Expense {
   @@index([userId])
 }
 
-
 model Activity {
   id        String   @id @default(uuid())
   action    String
@@ -159,10 +157,10 @@ model Activity {
   createdAt DateTime @default(now())
 
   userId String
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   tripId String?
-  trip   Trip? @relation(fields: [tripId], references: [id], onDelete: SetNull)
+  trip   Trip?   @relation(fields: [tripId], references: [id], onDelete: SetNull)
 
   @@index([userId, createdAt])
 }

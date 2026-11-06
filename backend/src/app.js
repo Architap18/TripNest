@@ -13,9 +13,11 @@ app.use(
     credentials: true,
   })
 );
-
+const tripRoutes = require("./routes/tripRoutes");
 app.use(express.json());
 app.use(cookieParser());
+
+
 
 app.get("/", (req, res) => {
   res.json({
@@ -24,5 +26,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/auth", authRoutes);
+app.use("/api/trips", tripRoutes);
+
 
 module.exports = app;
