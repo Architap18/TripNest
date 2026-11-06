@@ -14,6 +14,9 @@ app.use(
   })
 );
 const tripRoutes = require("./routes/tripRoutes");
+const itineraryRoutes = require("./routes/itineraryRoutes");
+const collaborationRoutes = require("./routes/collaborationRoutes");
+const expenseRoutes = require("./routes/expenseRoutes");
 app.use(express.json());
 app.use(cookieParser());
 
@@ -27,6 +30,8 @@ app.get("/", (req, res) => {
 
 app.use("/api/auth", authRoutes);
 app.use("/api/trips", tripRoutes);
-
+app.use("/api/itinerary", itineraryRoutes);
+app.use("/api/collaboration", collaborationRoutes);
+app.use("/api/expenses", expenseRoutes);
 
 module.exports = app;

@@ -1,18 +1,38 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+
 import { AuthProvider, useAuth } from "./context/AuthContext";
+
 import AuthPage from "./pages/auth/AuthPage";
 import Dashboard from "./pages/Dashboard";
+import Itinerary from "./pages/Itinerary";
+import Collaboration from "./pages/Collaboration";
+import Expenses from "./pages/Expenses";
+
+function LoadingScreen() {
+  return (
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        height: "100vh",
+      }}
+    >
+      Loading...
+    </div>
+  );
+}
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
 
-  if (loading) {
-    return (
-      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
-        Loading...
-      </div>
-    );
-  }
+  if (loading) return <LoadingScreen />;
 
   if (!user) {
     return <Navigate to="/login" replace />;
@@ -24,13 +44,7 @@ function ProtectedRoute({ children }) {
 function PublicRoute({ children }) {
   const { user, loading } = useAuth();
 
-  if (loading) {
-    return (
-      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
-        Loading...
-      </div>
-    );
-  }
+  if (loading) return <LoadingScreen />;
 
   if (user) {
     return <Navigate to="/dashboard" replace />;
@@ -52,6 +66,7 @@ function App() {
               </PublicRoute>
             }
           />
+
           <Route
             path="/login"
             element={
@@ -60,6 +75,7 @@ function App() {
               </PublicRoute>
             }
           />
+
           <Route
             path="/dashboard"
             element={
@@ -68,6 +84,34 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+          <Route
+            path="/itinerary"
+            element={
+              <ProtectedRoute>
+                <Itinerary />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/collaboration"
+            element={
+              <ProtectedRoute>
+                <Collaboration />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/expenses"
+            element={
+              <ProtectedRoute>
+                <Expenses />
+              </ProtectedRoute>
+            }
+          />
+
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
