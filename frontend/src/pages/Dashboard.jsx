@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -10,7 +9,6 @@ import {
   ChevronRight,
   MapPin,
   CalendarDays,
-  Users,
   Plus,
   Compass,
   Wallet,
@@ -98,7 +96,7 @@ const quickActions = [
   },
 ];
 
-// These are suggestions, not user trip records.
+// POPULAR DESTINATIONS
 
 const destinations = [
   {
@@ -125,6 +123,12 @@ const destinations = [
     image:
       "https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?w=700",
   },
+  {
+  name: "Kashmir",
+  region: "India",
+  image:
+    "https://images.unsplash.com/photo-1595815771614-ade9d652a65d?w=700",
+},
 ];
 
 // HELPER FUNCTIONS
@@ -149,15 +153,8 @@ const formatTripDates = (startDate, endDate) => {
 
   if (!start || !end) return "Dates not available";
 
-  const formattedStart = start.toLocaleDateString(
-    "en-IN",
-    options
-  );
-
-  const formattedEnd = end.toLocaleDateString(
-    "en-IN",
-    options
-  );
+  const formattedStart = start.toLocaleDateString("en-IN", options);
+  const formattedEnd = end.toLocaleDateString("en-IN", options);
 
   return `${formattedStart} – ${formattedEnd}`;
 };
@@ -184,6 +181,9 @@ const getTripImage = (trip) => {
   if (destination.includes("jaipur")) {
     return "https://images.unsplash.com/photo-1599661046827-dacff0c0f09a?w=900";
   }
+  if (destination.includes("kashmir")) {
+    return "https://images.unsplash.com/photo-1595815771614-ade9d652a65d?w=700";  
+  }
 
   return "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=900";
 };
@@ -200,22 +200,17 @@ function Dashboard() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
-  // CAROUSEL STATE
-
   const [activeSlide, setActiveSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
-
-  // NAVBAR STATE
-
   const [profileOpen, setProfileOpen] = useState(false);
-
-  // TRIP STATE
 
   const [trips, setTrips] = useState([]);
   const [tripsLoading, setTripsLoading] = useState(true);
   const [tripsError, setTripsError] = useState("");
 
-  // CREATE TRIP MODAL STATE
+  const [itineraryLoading, setItineraryLoading] = useState(false);
+  const [itineraryError, setItineraryError] = useState("");
+  const [dashboardItinerary, setDashboardItinerary] = useState([]);
 
   const [showCreateTrip, setShowCreateTrip] = useState(false);
   const [creatingTrip, setCreatingTrip] = useState(false);
@@ -236,13 +231,27 @@ function Dashboard() {
     new Date(new Date().getFullYear(), new Date().getMonth(), 1)
   );
 
-  // SAVED DESTINATION STATE
+  // SAVED DESTINATIONS
 
   const [savedDestinations, setSavedDestinations] = useState([]);
 
+  // DESTINATION CAROUSEL STATE
+
+  const [activeDestination, setActiveDestination] = useState(0);
+
+  const moveDestination = (direction) => {
+    setActiveDestination(
+      (current) =>
+        (current + direction + destinations.length) % destinations.length
+    );
+  };
+
+  const visibleDestinations = destinations.map(
+    (_, index) =>
+      destinations[(index + activeDestination) % destinations.length]
+  );
 
   // FETCH TRIPS
-
 
   const fetchTrips = async () => {
     try {
@@ -263,9 +272,49 @@ function Dashboard() {
     fetchTrips();
   }, []);
 
+  // FETCH ITINERARY FOR THE FIRST TRIP
+
+  useEffect(() => {
+    if (!trips.length) {
+      setDashboardItinerary([]);
+      return;
+    }
+
+    let isActive = true;
+
+    const fetchDashboardItinerary = async () => {
+      try {
+        setItineraryLoading(true);
+        setItineraryError("");
+
+        const data = await apiRequest(`/itinerary/${trips[0].id}`);
+
+        if (isActive) {
+          const sortedItems = (data.items || []).sort(
+            (a, b) => new Date(a.dateTime) - new Date(b.dateTime)
+          );
+
+          setDashboardItinerary(sortedItems);
+        }
+      } catch (error) {
+        if (isActive) {
+          setItineraryError(error.message);
+        }
+      } finally {
+        if (isActive) {
+          setItineraryLoading(false);
+        }
+      }
+    };
+
+    fetchDashboardItinerary();
+
+    return () => {
+      isActive = false;
+    };
+  }, [trips]);
 
   // CAROUSEL AUTO SLIDE
-
 
   useEffect(() => {
     if (isPaused) return;
@@ -278,9 +327,7 @@ function Dashboard() {
   }, [isPaused]);
 
   const nextSlide = () => {
-    setActiveSlide(
-      (current) => (current + 1) % slides.length
-    );
+    setActiveSlide((current) => (current + 1) % slides.length);
   };
 
   const previousSlide = () => {
@@ -288,10 +335,7 @@ function Dashboard() {
       (current) => (current - 1 + slides.length) % slides.length
     );
   };
-
-
-  // LOGOUT
-
+    // LOGOUT
 
   const handleLogout = async () => {
     try {
@@ -332,9 +376,7 @@ function Dashboard() {
       tripForm.endDate &&
       tripForm.endDate < tripForm.startDate
     ) {
-      setCreateTripError(
-        "End date cannot be before the start date."
-      );
+      setCreateTripError("End date cannot be before the start date.");
       return;
     }
 
@@ -359,10 +401,7 @@ function Dashboard() {
       });
 
       if (data.trip) {
-        setTrips((current) => [
-          data.trip,
-          ...current,
-        ]);
+        setTrips((current) => [data.trip, ...current]);
       } else {
         await fetchTrips();
       }
@@ -384,27 +423,23 @@ function Dashboard() {
     }
   };
 
-
   // CALENDAR FUNCTIONS
 
-
   const changeMonth = (amount) => {
-    setCalendarDate((current) =>
-      new Date(
-        current.getFullYear(),
-        current.getMonth() + amount,
-        1
-      )
+    setCalendarDate(
+      (current) =>
+        new Date(
+          current.getFullYear(),
+          current.getMonth() + amount,
+          1
+        )
     );
   };
 
-  const monthName = calendarDate.toLocaleDateString(
-    "en-US",
-    {
-      month: "long",
-      year: "numeric",
-    }
-  );
+  const monthName = calendarDate.toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric",
+  });
 
   const firstDay = new Date(
     calendarDate.getFullYear(),
@@ -418,7 +453,7 @@ function Dashboard() {
     0
   ).getDate();
 
-  // Build calendar events using actual trip dates.
+  // CALENDAR EVENTS
 
   const calendarEvents = {};
 
@@ -460,9 +495,7 @@ function Dashboard() {
     }
   });
 
-
   // SAVED DESTINATIONS
-
 
   const toggleSaved = (name) => {
     setSavedDestinations((current) =>
@@ -472,31 +505,28 @@ function Dashboard() {
     );
   };
 
-  // FILTER UPCOMING TRIPS
+  // UPCOMING TRIPS
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
   const upcomingTrips = trips.filter((trip) => {
     const endDate = parseLocalDate(trip.endDate);
-
     return endDate && endDate >= today;
   });
 
   return (
     <div className="tripnest-dashboard">
 
-      {/*NAVBAR */}
+      {/* NAVBAR */}
 
       <header className="tripnest-navbar">
-
         <Link to="/dashboard" className="tripnest-brand">
           TripNest
         </Link>
 
         <div className="tripnest-search">
           <Search size={19} />
-
           <input
             type="search"
             placeholder="Search destinations, trips and places..."
@@ -504,7 +534,6 @@ function Dashboard() {
         </div>
 
         <div className="tripnest-navbar-right">
-
           <button
             className="tripnest-notification"
             aria-label="Notifications"
@@ -514,28 +543,21 @@ function Dashboard() {
           </button>
 
           <div className="tripnest-profile-wrapper">
-
             <button
               className="tripnest-profile"
               type="button"
               onClick={() => setProfileOpen(!profileOpen)}
             >
               <div className="tripnest-avatar">
-                {(user?.name || "Traveler")
-                  .charAt(0)
-                  .toUpperCase()}
+                {(user?.name || "Traveler").charAt(0).toUpperCase()}
               </div>
 
-              <span>
-                Hi, {user?.name || "Traveler"}
-              </span>
-
+              <span>Hi, {user?.name || "Traveler"}</span>
               <ChevronDown size={17} />
             </button>
 
             {profileOpen && (
               <div className="tripnest-profile-menu">
-
                 <Link
                   to="/profile"
                   onClick={() => setProfileOpen(false)}
@@ -543,31 +565,25 @@ function Dashboard() {
                   My Profile
                 </Link>
 
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                >
+                <button type="button" onClick={handleLogout}>
                   <LogOut size={16} />
                   Logout
                 </button>
-
               </div>
             )}
-
           </div>
         </div>
       </header>
 
       <main className="tripnest-page">
 
-        {/* HERO CAROUSEL*/}
+        {/* HERO CAROUSEL */}
 
         <section
           className="tripnest-hero"
           onMouseEnter={() => setIsPaused(true)}
           onMouseLeave={() => setIsPaused(false)}
         >
-
           {slides.map((slide, index) => (
             <div
               key={slide.location}
@@ -583,13 +599,11 @@ function Dashboard() {
           <div className="tripnest-hero-overlay" />
 
           <div className="tripnest-hero-content">
-
             <span className="tripnest-hero-label">
               EXPLORE. PLAN. TRAVEL.
             </span>
 
             <h1>{slides[activeSlide].title}</h1>
-
             <p>{slides[activeSlide].description}</p>
 
             <button
@@ -601,7 +615,6 @@ function Dashboard() {
               Plan a Trip
               <ArrowRight size={17} />
             </button>
-
           </div>
 
           <div className="tripnest-hero-location">
@@ -638,48 +651,18 @@ function Dashboard() {
               />
             ))}
           </div>
-
         </section>
 
-        {/* QUICK ACTIONS*/}
+        {/* FOUR QUICK ACTIONS */}
 
-        <section className="tripnest-section tripnest-quick-section">
-
-          <div className="tripnest-section-heading">
-
-            <span className="tripnest-eyebrow">
-              YOUR WORKSPACE
-            </span>
-
-            <h2>Everything for your next journey</h2>
-
-            <p>
-              Plan, organize and manage your travels in one place.
-            </p>
-
-          </div>
-
+        <section className="tripnest-section tripnest-top-workspace">
           <div className="tripnest-quick-grid">
-
             {quickActions.map((action) => {
-              const Icon = action.icon;
-
               const content = (
-                <>
-                  <div className="tripnest-quick-icon">
-                    <Icon size={26} />
-                  </div>
-
-                  <div className="tripnest-quick-text">
-                    <h3>{action.title}</h3>
-                    <p>{action.description}</p>
-                  </div>
-
-                  <ArrowRight
-                    size={19}
-                    className="tripnest-quick-arrow"
-                  />
-                </>
+                <div className="tripnest-quick-text">
+                  <h3>{action.title}</h3>
+                  <p>{action.description}</p>
+                </div>
               );
 
               if (action.title === "Plan a Trip") {
@@ -705,39 +688,36 @@ function Dashboard() {
                 </Link>
               );
             })}
-
           </div>
         </section>
 
-        {/* WORKSPACE*/}
+        {/* LOWER WORKSPACE */}
 
-        <section className="tripnest-section">
+        <section className="tripnest-section tripnest-bottom-workspace">
 
-          <div className="tripnest-workspace-grid">
+          {/* LEFT SIDE: MY TRIPS + ITINERARY */}
 
-            {/* UPCOMING TRIPS*/}
+          <div className="tripnest-left-workspace">
 
-            <div className="tripnest-panel">
+            {/* MY TRIPS */}
 
-              <div className="tripnest-panel-heading">
-
-                <div>
-                  <h2>
-                    <Plane size={19} />
-                    Upcoming Trips
-                  </h2>
-
-                  <p>Your next adventures</p>
-                </div>
+            <div className="tripnest-my-trips">
+              <div className="tripnest-my-trips-heading">
+                <h2>My Trips</h2>
 
                 <Link to="/my-trips">
-                  View All <ArrowRight size={15} />
+                  View All <ArrowRight size={16} />
                 </Link>
-
               </div>
 
-              <div className="tripnest-trip-list">
+              <div className="tripnest-trip-filters">
+                <span className="active">All Trips</span>
+                <span>Upcoming</span>
+                <span>Ongoing</span>
+                <span>Completed</span>
+              </div>
 
+              <div className="tripnest-my-trip-list">
                 {tripsLoading ? (
                   <div className="tripnest-empty-state">
                     <LoaderCircle size={27} />
@@ -749,36 +729,23 @@ function Dashboard() {
                       {tripsError}
                     </p>
 
-                    <button
-                      type="button"
-                      onClick={fetchTrips}
-                    >
+                    <button type="button" onClick={fetchTrips}>
                       Try Again
                     </button>
                   </div>
-                ) : upcomingTrips.length === 0 ? (
+                ) : trips.length === 0 ? (
                   <div className="tripnest-empty-state">
-                    <Plane size={30} />
+                    <h3>No trips yet</h3>
+                    <p>Create your first trip and start planning.</p>
 
-                    <h3>No upcoming trips</h3>
-
-                    <p>
-                      Create your first trip and start planning
-                      your next journey.
-                    </p>
-
-                    <button
-                      type="button"
-                      onClick={openCreateTrip}
-                    >
-                      <Plus size={16} />
-                      Create Your First Trip
+                    <button type="button" onClick={openCreateTrip}>
+                      <Plus size={16} /> Create a Trip
                     </button>
                   </div>
                 ) : (
-                  upcomingTrips.map((trip) => (
+                  trips.map((trip) => (
                     <article
-                      className="tripnest-trip-row"
+                      className="tripnest-my-trip-card"
                       key={trip.id}
                     >
                       <img
@@ -786,54 +753,39 @@ function Dashboard() {
                         alt={trip.destination}
                       />
 
-                      <div className="tripnest-trip-info">
-
+                      <div className="tripnest-my-trip-info">
                         <h3>{trip.title}</h3>
 
                         <p>
-                          <MapPin size={13} />
-                          {trip.destination}
-                        </p>
-
-                        <p>
-                          <CalendarDays size={13} />
+                          <CalendarDays size={15} />
                           {formatTripDates(
                             trip.startDate,
                             trip.endDate
                           )}
                         </p>
 
+                        <p>
+                          <MapPin size={15} />
+                          {trip.destination}
+                        </p>
                       </div>
 
                       <span className="tripnest-trip-status">
                         {getStatusLabel(trip.status)}
                       </span>
-
                     </article>
                   ))
                 )}
-
               </div>
-
-              <Link
-                to="/my-trips"
-                className="tripnest-panel-bottom-link"
-              >
-                Explore all your trips
-                <ArrowRight size={16} />
-              </Link>
-
             </div>
 
             {/* MY ITINERARY */}
 
-            <div className="tripnest-panel">
-
+            <div className="tripnest-panel tripnest-itinerary-panel">
               <div className="tripnest-panel-heading">
-
                 <div>
                   <h2>
-                    <Route size={19} />
+                    <Route size={20} />
                     My Itinerary
                   </h2>
 
@@ -843,56 +795,136 @@ function Dashboard() {
                 <Link to="/itinerary">
                   View All <ArrowRight size={15} />
                 </Link>
-
               </div>
 
-              <div className="tripnest-itinerary-summary">
-                <div>
-                  <h3>Plan your activities</h3>
-                  <p>
-                    Your trip schedules will appear here once
-                    you create an itinerary.
-                  </p>
+              {itineraryLoading ? (
+                <div className="tripnest-empty-state">
+                  <LoaderCircle size={25} />
+                  <p>Loading your itinerary...</p>
                 </div>
-              </div>
+              ) : itineraryError ? (
+                <div className="tripnest-empty-state">
+                  <p>{itineraryError}</p>
+                </div>
+              ) : dashboardItinerary.length > 0 ? (
+                <div className="tripnest-dashboard-itinerary-list">
+                  {dashboardItinerary.slice(0, 4).map((item) => (
+                    <article
+                      className="tripnest-dashboard-itinerary-item"
+                      key={item.id}
+                    >
+                      <div className="tripnest-itinerary-item-date">
+                        <CalendarDays size={17} />
 
-              <div className="tripnest-empty-state">
-                <Route size={28} />
+                        <span>
+                          {new Date(item.dateTime).toLocaleDateString(
+                            "en-IN",
+                            {
+                              day: "numeric",
+                              month: "short",
+                            }
+                          )}
+                        </span>
+                      </div>
 
-                <h3>No itinerary created</h3>
+                      <div className="tripnest-dashboard-itinerary-info">
+                        <h3>{item.title}</h3>
 
-                <p>
-                  Choose a trip and start adding places,
-                  activities and schedules.
-                </p>
+                        <p>
+                          {item.category || "ACTIVITY"}
+                          {item.location && ` · ${item.location}`}
+                        </p>
+                      </div>
 
-                <Link to="/itinerary">
-                  Build Itinerary
-                  <ArrowRight size={15} />
-                </Link>
-              </div>
+                      <span className="tripnest-dashboard-itinerary-time">
+                        {new Date(item.dateTime).toLocaleTimeString(
+                          "en-IN",
+                          {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          }
+                        )}
+                      </span>
+                    </article>
+                  ))}
 
+                  {dashboardItinerary.length > 4 && (
+                    <p className="tripnest-itinerary-more">
+                      +{dashboardItinerary.length - 4} more activities
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="tripnest-empty-state">
+                  <Route size={28} />
+                  <h3>No activities planned yet</h3>
+                  <p>
+                    Add activities to your selected trip to see them here.
+                  </p>
+
+                  <Link to="/itinerary">
+                    Build Itinerary <ArrowRight size={15} />
+                  </Link>
+                </div>
+              )}
+            </div>
+          </div>
+                    {/* RIGHT SIDE: UPCOMING TRIP + CALENDAR */}
+
+          <div className="tripnest-right-workspace">
+
+            {/* UPCOMING TRIP */}
+
+            <div className="tripnest-upcoming-feature">
+              {upcomingTrips.length > 0 ? (
+                <>
+                  <img
+                    src={getTripImage(upcomingTrips[0])}
+                    alt={upcomingTrips[0].destination}
+                  />
+
+                  <div className="tripnest-upcoming-overlay">
+                    <span>Upcoming Trip</span>
+                    <h2>{upcomingTrips[0].destination}</h2>
+
+                    <p>
+                      <CalendarDays size={17} />
+
+                      {formatTripDates(
+                        upcomingTrips[0].startDate,
+                        upcomingTrips[0].endDate
+                      )}
+                    </p>
+
+                    <Link to="/my-trips">
+                      View Details <ArrowRight size={16} />
+                    </Link>
+                  </div>
+                </>
+              ) : (
+                <div className="tripnest-upcoming-empty">
+                  <span>YOUR NEXT ADVENTURE</span>
+                  <h2>No upcoming trip</h2>
+                  <p>Start planning your next journey.</p>
+
+                  <button type="button" onClick={openCreateTrip}>
+                    Plan a Trip <ArrowRight size={16} />
+                  </button>
+                </div>
+              )}
             </div>
 
-            {/*TRIP CALENDAR */}
+            {/* TRIP CALENDAR */}
 
-            <div className="tripnest-panel">
-
+            <div className="tripnest-panel tripnest-calendar-panel">
               <div className="tripnest-panel-heading">
-
-                <div>
-                  <h2>
-                    <CalendarDays size={19} />
-                    Trip Calendar
-                  </h2>
-
-                  <p>Your saved travel dates</p>
-                </div>
-
+                <h2>
+                  <CalendarDays size={20} />
+                  Trip Calendar
+                </h2>
               </div>
 
               <div className="tripnest-calendar-heading">
-
                 <button
                   type="button"
                   onClick={() => changeMonth(-1)}
@@ -910,27 +942,19 @@ function Dashboard() {
                 >
                   <ChevronRight size={18} />
                 </button>
-
               </div>
 
               <div className="tripnest-calendar-grid">
-
-                {[
-                  "Sun",
-                  "Mon",
-                  "Tue",
-                  "Wed",
-                  "Thu",
-                  "Fri",
-                  "Sat",
-                ].map((day) => (
-                  <span
-                    className="tripnest-calendar-weekday"
-                    key={day}
-                  >
-                    {day}
-                  </span>
-                ))}
+                {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(
+                  (day) => (
+                    <span
+                      className="tripnest-calendar-weekday"
+                      key={day}
+                    >
+                      {day}
+                    </span>
+                  )
+                )}
 
                 {Array.from({ length: firstDay }).map((_, index) => (
                   <span
@@ -952,32 +976,18 @@ function Dashboard() {
                       title={events.join(", ")}
                     >
                       <span>{day}</span>
-
-                      {events.length > 0 && (
-                        <small>{events.length} trip</small>
-                      )}
                     </div>
                   );
                 })}
-
               </div>
-
-              <div className="tripnest-calendar-legend">
-                <span />
-                Your saved trip dates
-              </div>
-
             </div>
-
           </div>
         </section>
 
         {/* POPULAR DESTINATIONS */}
 
         <section className="tripnest-section">
-
           <div className="tripnest-section-heading tripnest-heading-row">
-
             <div>
               <span className="tripnest-eyebrow">
                 FIND YOUR NEXT ESCAPE
@@ -985,84 +995,89 @@ function Dashboard() {
 
               <h2>Popular Destinations</h2>
 
-              <p>
-                Beautiful places waiting to be explored.
-              </p>
+              <p>Beautiful places waiting to be explored.</p>
             </div>
 
-            <Link
-              to="/explore"
-              className="tripnest-view-link"
-            >
+            <Link to="/explore" className="tripnest-view-link">
               Explore All <ArrowRight size={16} />
             </Link>
-
           </div>
 
-          <div className="tripnest-destination-grid">
+          {/* DESTINATION CAROUSEL */}
 
-            {destinations.map((destination) => (
-              <article
-                className="tripnest-destination-card"
-                key={destination.name}
-              >
-
-                <div className="tripnest-destination-image">
-
-                  <img
-                    src={destination.image}
-                    alt={destination.name}
-                  />
-
-                  <button
-                    type="button"
-                    onClick={() => toggleSaved(destination.name)}
-                    aria-label={`Save ${destination.name}`}
-                    className={
-                      savedDestinations.includes(destination.name)
-                        ? "saved"
-                        : ""
-                    }
-                  >
-                    <Bookmark
-                      size={19}
-                      fill={
-                        savedDestinations.includes(destination.name)
-                          ? "currentColor"
-                          : "none"
-                      }
+          <div className="tripnest-destination-carousel">
+            <div className="tripnest-destination-track">
+              {visibleDestinations.map((destination, index) => (
+                <article
+                  className={`tripnest-destination-card position-${index}`}
+                  key={destination.name}
+                >
+                  <div className="tripnest-destination-image">
+                    <img
+                      src={destination.image}
+                      alt={destination.name}
                     />
-                  </button>
 
-                </div>
+                    <button
+                      type="button"
+                      onClick={() => toggleSaved(destination.name)}
+                      aria-label={`Save ${destination.name}`}
+                      className={
+                        savedDestinations.includes(destination.name)
+                          ? "saved"
+                          : ""
+                      }
+                    >
+                      <Bookmark
+                        size={19}
+                        fill={
+                          savedDestinations.includes(destination.name)
+                            ? "currentColor"
+                            : "none"
+                        }
+                      />
+                    </button>
+                  </div>
 
-                <div className="tripnest-destination-info">
+                  <div className="tripnest-destination-info">
+                    <h3>{destination.name}</h3>
+                    <p>{destination.region}</p>
 
-                  <h3>{destination.name}</h3>
+                    <Link to="/explore">
+                      Explore destination
+                      <ArrowRight size={14} />
+                    </Link>
+                  </div>
+                </article>
+              ))}
+            </div>
 
-                  <p>{destination.region}</p>
+            <div className="tripnest-destination-controls">
+              <button
+                type="button"
+                onClick={() => moveDestination(-1)}
+                aria-label="Previous destinations"
+              >
+                <ChevronLeft size={22} />
+              </button>
 
-                  <Link to="/explore">
-                    Explore destination
-                    <ArrowRight size={14} />
-                  </Link>
+              <span>View More Tours</span>
 
-                </div>
-
-              </article>
-            ))}
-
+              <button
+                type="button"
+                onClick={() => moveDestination(1)}
+                aria-label="Next destinations"
+              >
+                <ChevronRight size={22} />
+              </button>
+            </div>
           </div>
         </section>
 
-        {/* =====================================
-            RECENT ACTIVITY
-        ===================================== */}
+        {/* RECENT ACTIVITY */}
 
         <section className="tripnest-section">
-
           <div className="tripnest-section-heading">
-
             <span className="tripnest-eyebrow">
               YOUR TRAVEL WORKSPACE
             </span>
@@ -1072,11 +1087,9 @@ function Dashboard() {
             <p>
               Stay up to date with your latest travel planning.
             </p>
-
           </div>
 
           <div className="tripnest-activity-panel">
-
             <div className="tripnest-empty-state">
               <CalendarDays size={28} />
 
@@ -1087,20 +1100,14 @@ function Dashboard() {
                 when activity tracking is connected.
               </p>
             </div>
-
           </div>
         </section>
 
-        {/* =====================================
-            OPTIONAL AI SECTION
-        ===================================== */}
+        {/* OPTIONAL AI SECTION */}
 
         <section className="tripnest-section">
-
           <div className="tripnest-ai-banner">
-
             <div className="tripnest-ai-content">
-
               <span>
                 <Sparkles size={17} />
                 YOUR OPTIONAL TRAVEL COMPANION
@@ -1121,22 +1128,17 @@ function Dashboard() {
                 Explore with TripNest AI
                 <ArrowRight size={17} />
               </button>
-
             </div>
 
             <div className="tripnest-ai-decoration">
               <Compass size={105} />
             </div>
-
           </div>
         </section>
 
-        {/* =====================================
-            FOOTER
-        ===================================== */}
+        {/* FOOTER */}
 
         <footer className="tripnest-footer">
-
           <Link to="/dashboard" className="tripnest-brand">
             TripNest
           </Link>
@@ -1146,14 +1148,10 @@ function Dashboard() {
           <span>
             © 2026 TripNest. Explore more, worry less.
           </span>
-
         </footer>
-
       </main>
 
-      {/* =====================================
-          CREATE TRIP MODAL
-      ===================================== */}
+      {/* CREATE TRIP MODAL */}
 
       {showCreateTrip && (
         <div
@@ -1164,16 +1162,13 @@ function Dashboard() {
             }
           }}
         >
-
           <div
             className="tripnest-create-modal"
             role="dialog"
             aria-modal="true"
             aria-labelledby="create-trip-title"
           >
-
             <div className="tripnest-modal-heading">
-
               <div>
                 <span className="tripnest-eyebrow">
                   START YOUR JOURNEY
@@ -1183,9 +1178,7 @@ function Dashboard() {
                   Create a New Trip
                 </h2>
 
-                <p>
-                  Add your destination and travel details.
-                </p>
+                <p>Add your destination and travel details.</p>
               </div>
 
               <button
@@ -1196,11 +1189,9 @@ function Dashboard() {
               >
                 <X size={20} />
               </button>
-
             </div>
 
             <form onSubmit={handleCreateTrip}>
-
               <div className="tripnest-form-group">
                 <label htmlFor="trip-title">
                   Trip Name *
@@ -1250,7 +1241,6 @@ function Dashboard() {
               </div>
 
               <div className="tripnest-form-row">
-
                 <div className="tripnest-form-group">
                   <label htmlFor="trip-start-date">
                     Start Date *
@@ -1281,7 +1271,6 @@ function Dashboard() {
                     required
                   />
                 </div>
-
               </div>
 
               <div className="tripnest-form-group">
@@ -1308,7 +1297,6 @@ function Dashboard() {
               )}
 
               <div className="tripnest-modal-actions">
-
                 <button
                   type="button"
                   className="tripnest-cancel-button"
@@ -1335,15 +1323,11 @@ function Dashboard() {
                     </>
                   )}
                 </button>
-
               </div>
-
             </form>
-
           </div>
         </div>
       )}
-
     </div>
   );
 }
