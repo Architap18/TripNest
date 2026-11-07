@@ -1,6 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
-
-/* Dashboard */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@1,500;1,600;1,700&display=swap');
 
 .tripnest-dashboard {
   --primary: #6945db;
@@ -448,14 +447,14 @@
 .tripnest-top-workspace .tripnest-quick-text h3 {
   margin: 0 0 6px;
   color: #111;
-  font-size: 15px;
-  font-weight: 700;
+  font-size: 19px;
+  font-weight: 900;
 }
 
 .tripnest-top-workspace .tripnest-quick-text p {
   margin: 0;
-  color: #666;
-  font-size: 12px;
+  color: #575757;
+  font-size: 14px;
   line-height: 1.45;
 }
 
@@ -1056,16 +1055,6 @@
   font-size: 12px;
   font-weight: 700;
 }
-
-/* RECENT ACTIVITY */
-
-.tripnest-activity-panel {
-  padding: 10px;
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  background: white;
-}
-
 /* AI BANNER */
 
 .tripnest-ai-banner {
@@ -1766,5 +1755,541 @@
     flex-basis: 82%;
     height: 280px;
     transform: none;
+  }
+}
+/* Centre Popular Destinations heading */
+
+.tripnest-heading-row {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.tripnest-heading-row > div {
+  width: 100%;
+  text-align: center;
+}
+
+.tripnest-heading-row .tripnest-eyebrow {
+  display: block;
+  margin-bottom: 12px;
+}
+.tripnest-eyebrow{
+  font-size: 25px;
+}
+.tripnest-heading-row h2 {
+  margin: 8px 0;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 70px;
+  font-weight: 700;
+  font-style:italic;
+}
+
+.tripnest-heading-row p {
+  margin-top: 10px;
+  font-size: 20px;
+}
+
+ /* Smooth destination carousel transitions */ 
+
+.tripnest-destination-card {
+  transition:
+    transform 0.65s cubic-bezier(0.22, 1, 0.36, 1),
+    height 0.65s ease,
+    flex-basis 0.65s ease,
+    box-shadow 0.4s ease;
+
+  will-change: transform;
+}
+
+/* Hover lift */
+
+.tripnest-destination-card:hover {
+  transform: translateY(-12px) scale(1.02);
+  box-shadow: 0 22px 45px rgba(30, 25, 60, 0.22);
+  z-index: 10;
+}
+
+/* Image zoom */
+
+.tripnest-destination-image img {
+  transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.tripnest-destination-card:hover
+.tripnest-destination-image img {
+  transform: scale(1.09);
+}
+
+/* Smooth overlay */
+
+.tripnest-destination-info {
+  transition: background 0.4s ease;
+}
+
+
+.tripnest-activity-panel {
+  width: 100%;
+  padding: 24px;
+  background: #ffffff;
+  border: 1px solid #eeeaf5;
+  border-radius: 18px;
+  box-shadow: 0 4px 18px rgba(35, 24, 70, 0.04);
+}
+
+/* Activity List */
+
+.tripnest-activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* Individual Activity */
+
+.tripnest-activity-item {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 20px 12px;
+  border-bottom: 1px solid #f0edf5;
+  transition: background 0.2s ease;
+}
+
+.tripnest-activity-item:last-child {
+  border-bottom: none;
+}
+
+.tripnest-activity-item:hover {
+  background: #faf9fd;
+  border-radius: 12px;
+}
+
+/* Activity Icon */
+
+.tripnest-activity-icon {
+  width: 46px;
+  height: 46px;
+  min-width: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  background: #f0eaff;
+  color: #7047e8;
+}
+
+/* Activity Information */
+
+.tripnest-activity-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.tripnest-activity-info h3 {
+  margin: 0 0 6px;
+  color: #241c3b;
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.tripnest-activity-info p {
+  margin: 0 0 6px;
+  color: #777187;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.tripnest-activity-info span {
+  display: inline-block;
+  color: #7047e8;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* Activity Date and Time */
+
+.tripnest-activity-item time {
+  color: #9690a4;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+/* Responsive Design */
+
+@media (max-width: 600px) {
+  .tripnest-activity-panel {
+    padding: 14px;
+  }
+
+  .tripnest-activity-item {
+    gap: 12px;
+    padding: 16px 6px;
+    flex-wrap: wrap;
+  }
+
+  .tripnest-activity-icon {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+  }
+
+  .tripnest-activity-info h3 {
+    font-size: 14px;
+  }
+
+  .tripnest-activity-info p {
+    font-size: 12px;
+  }
+
+  .tripnest-activity-item time {
+    width: 100%;
+    padding-left: 52px;
+  }
+}
+/* ==========================================
+   LATEST UPDATES SECTION
+========================================== */
+
+.tripnest-latest-updates {
+  padding: 30px;
+  background: #fffaf4;
+  border-radius: 24px;
+}
+
+/* Heading */
+
+.tripnest-latest-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+
+.tripnest-latest-heading h2 {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0;
+  color: #173b32;
+  font-size: 27px;
+  font-weight: 750;
+}
+
+.tripnest-latest-heading h2 svg {
+  color: #e67e22;
+}
+
+.tripnest-latest-heading > a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #d96a1b;
+  text-decoration: none;
+  font-weight: 650;
+}
+
+/* Two-column layout */
+
+.tripnest-updates-layout {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 24px;
+  align-items: stretch;
+}
+
+/* Activity panel */
+
+.tripnest-activity-panel {
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 22px;
+  padding: 18px 22px;
+  min-height: 310px;
+}
+
+/* Activity timeline */
+
+.tripnest-activity-list {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.tripnest-activity-list::before {
+  content: "";
+  position: absolute;
+  left: 13px;
+  top: 38px;
+  bottom: 38px;
+  width: 2px;
+  background: #e8e3dc;
+}
+
+.tripnest-activity-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  min-height: 105px;
+  padding: 12px 4px;
+  border-bottom: 1px solid #f2eee8;
+}
+
+.tripnest-activity-item:last-child {
+  border-bottom: none;
+}
+
+/* Timeline dot */
+
+.tripnest-timeline-dot {
+  position: relative;
+  z-index: 1;
+  width: 26px;
+  min-width: 26px;
+  display: flex;
+  justify-content: center;
+}
+
+.tripnest-timeline-dot span {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: #388575;
+  border: 2px solid white;
+}
+
+/* Activity icons */
+
+.tripnest-activity-icon {
+  width: 76px;
+  height: 76px;
+  min-width: 76px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 20px;
+}
+
+.tripnest-activity-icon.trip-activity {
+  background: #dceee7;
+  color: #347e6e;
+}
+
+.tripnest-activity-icon.itinerary-activity {
+  background: #fff0df;
+  color: #e47721;
+}
+
+.tripnest-activity-icon.member-activity {
+  background: #eae5fb;
+  color: #6851c5;
+}
+
+/* Activity information */
+
+.tripnest-activity-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.tripnest-activity-info h3 {
+  margin: 0 0 6px;
+  color: #18233a;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.tripnest-activity-info p {
+  margin: 0;
+  color: #696773;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.tripnest-activity-item time {
+  align-self: flex-start;
+  padding-top: 14px;
+  color: #77727a;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+/* Upcoming trip card */
+
+.tripnest-activity-upcoming {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  align-items: center;
+  gap: 24px;
+  padding: 22px;
+  background: #fff4e9;
+  border: 1px solid #f6eadc;
+  border-radius: 22px;
+  box-shadow: 0 8px 25px rgba(65, 45, 25, 0.07);
+}
+
+.tripnest-activity-upcoming-image {
+  position: relative;
+  height: 260px;
+  overflow: hidden;
+  border-radius: 20px;
+}
+
+.tripnest-activity-upcoming-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.tripnest-activity-upcoming-image > span {
+  position: absolute;
+  top: 20px;
+  left: 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: white;
+  font-weight: 650;
+  text-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+}
+
+.tripnest-activity-upcoming-image > span svg {
+  color: #ff9b42;
+}
+
+.tripnest-activity-upcoming-info {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.tripnest-upcoming-label {
+  color: #69636b;
+  font-size: 15px;
+}
+
+.tripnest-activity-upcoming-info h2 {
+  margin: 0;
+  color: #172238;
+  font-size: 25px;
+  font-weight: 750;
+}
+
+.tripnest-activity-upcoming-info p {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0;
+  color: #55515a;
+  font-size: 14px;
+}
+
+.tripnest-activity-upcoming-info p svg {
+  color: #df7627;
+}
+
+.tripnest-activity-upcoming-info > a,
+.tripnest-activity-no-upcoming button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: fit-content;
+  padding: 13px 22px;
+  background: #e8751c;
+  border: none;
+  border-radius: 30px;
+  color: white;
+  font-weight: 650;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.tripnest-activity-upcoming-info > a:hover,
+.tripnest-activity-no-upcoming button:hover {
+  background: #c85d12;
+}
+
+/* No upcoming trip */
+
+.tripnest-activity-no-upcoming {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 12px;
+  min-height: 260px;
+  color: #6f5c4c;
+}
+
+.tripnest-activity-no-upcoming h3,
+.tripnest-activity-no-upcoming p {
+  margin: 0;
+}
+
+/* Responsive */
+
+@media (max-width: 1000px) {
+  .tripnest-updates-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .tripnest-activity-upcoming {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .tripnest-latest-updates {
+    padding: 18px;
+  }
+
+  .tripnest-latest-heading {
+    align-items: flex-start;
+    gap: 12px;
+    flex-direction: column;
+  }
+
+  .tripnest-latest-heading h2 {
+    font-size: 21px;
+  }
+
+  .tripnest-activity-item {
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .tripnest-activity-icon {
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+    border-radius: 14px;
+  }
+
+  .tripnest-activity-info h3 {
+    font-size: 14px;
+  }
+
+  .tripnest-activity-info p {
+    font-size: 12px;
+  }
+
+  .tripnest-activity-item time {
+    width: 100%;
+    padding: 0 0 0 84px;
+  }
+
+  .tripnest-activity-upcoming {
+    grid-template-columns: 1fr;
+  }
+
+  .tripnest-activity-upcoming-image {
+    height: 210px;
   }
 }

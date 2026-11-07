@@ -17,6 +17,7 @@ const tripRoutes = require("./routes/tripRoutes");
 const itineraryRoutes = require("./routes/itineraryRoutes");
 const collaborationRoutes = require("./routes/collaborationRoutes");
 const expenseRoutes = require("./routes/expenseRoutes");
+const activityRoutes = require("./routes/activityRoutes");
 app.use(express.json());
 app.use(cookieParser());
 
@@ -33,5 +34,5 @@ app.use("/api/trips", tripRoutes);
 app.use("/api/itinerary", itineraryRoutes);
 app.use("/api/collaboration", collaborationRoutes);
 app.use("/api/expenses", expenseRoutes);
-
+app.use("/api/activity", activityRoutes);
 module.exports = app;

@@ -68,7 +68,15 @@ const createTrip = async (req, res) => {
         ownerId: req.user.userId,
       },
     });
-
+    // Record trip creation in Recent Activity
+    await prisma.activity.create({
+      data: {
+        action: "TRIP_CREATED",
+        details: `Created a trip to ${trip.destination}`,
+        userId: req.user.userId,
+        tripId: trip.id,
+      },
+    });
     return res.status(201).json({
       message: "Trip created successfully",
       trip,

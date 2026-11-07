@@ -20,6 +20,8 @@ import {
   Sparkles,
   X,
   LoaderCircle,
+  BriefcaseBusiness,
+  Users
 } from "lucide-react";
 
 import { useAuth } from "../context/AuthContext";
@@ -195,7 +197,24 @@ const getStatusLabel = (status) => {
 };
 
 // DASHBOARD COMPONENT
+const getTimeAgo = (date) => {
+  const seconds = Math.floor(
+    (Date.now() - new Date(date).getTime()) / 1000
+  );
 
+  if (seconds < 60) return "Just now";
+
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes} minutes ago`;
+
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} hours ago`;
+
+  const days = Math.floor(hours / 24);
+  if (days === 1) return "Yesterday";
+
+  return `${days} days ago`;
+};
 function Dashboard() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -215,7 +234,9 @@ function Dashboard() {
   const [showCreateTrip, setShowCreateTrip] = useState(false);
   const [creatingTrip, setCreatingTrip] = useState(false);
   const [createTripError, setCreateTripError] = useState("");
-
+  const [activities, setActivities] = useState([]);
+  const [activityLoading, setActivityLoading] = useState(true);
+  const [activityError, setActivityError] = useState("");
   const [tripForm, setTripForm] = useState({
     title: "",
     destination: "",
@@ -267,9 +288,24 @@ function Dashboard() {
       setTripsLoading(false);
     }
   };
+// FETCH RECENT ACTIVITY
+const fetchRecentActivity = async () => {
+  try {
+    setActivityLoading(true);
+    setActivityError("");
 
+    const data = await apiRequest("/activity");
+
+    setActivities(data.activities || []);
+  } catch (error) {
+    setActivityError(error.message);
+  } finally {
+    setActivityLoading(false);
+  }
+};
   useEffect(() => {
     fetchTrips();
+    fetchRecentActivity();
   }, []);
 
   // FETCH ITINERARY FOR THE FIRST TRIP
@@ -405,7 +441,7 @@ function Dashboard() {
       } else {
         await fetchTrips();
       }
-
+      await fetchRecentActivity();
       setTripForm({
         title: "",
         destination: "",
@@ -993,14 +1029,14 @@ function Dashboard() {
                 FIND YOUR NEXT ESCAPE
               </span>
 
-              <h2>Popular Destinations</h2>
+              <h2 className="popular-destinations-heading">
+                Popular Destinations
+              </h2>
 
-              <p>Beautiful places waiting to be explored.</p>
+              <p className="popular-destinations-subtitle">
+                Beautiful places waiting to be explored.
+              </p>
             </div>
-
-            <Link to="/explore" className="tripnest-view-link">
-              Explore All <ArrowRight size={16} />
-            </Link>
           </div>
 
           {/* DESTINATION CAROUSEL */}
@@ -1075,34 +1111,167 @@ function Dashboard() {
         </section>
 
         {/* RECENT ACTIVITY */}
+        <section className="tripnest-section tripnest-latest-updates">
 
-        <section className="tripnest-section">
-          <div className="tripnest-section-heading">
-            <span className="tripnest-eyebrow">
-              YOUR TRAVEL WORKSPACE
-            </span>
+          {/* SECTION HEADING */}
+          <div className="tripnest-latest-heading">
+            <h2>
+              <CalendarDays size={27} />
+              Your Latest Updates
+            </h2>
 
-            <h2>Recent Activity</h2>
-
-            <p>
-              Stay up to date with your latest travel planning.
-            </p>
+            <Link to="/activity">
+              View All Activity <ArrowRight size={20} />
+            </Link>
           </div>
 
-          <div className="tripnest-activity-panel">
-            <div className="tripnest-empty-state">
-              <CalendarDays size={28} />
+          <div className="tripnest-updates-layout">
 
-              <h3>No recent activity</h3>
+            {/* LEFT: ACTIVITY TIMELINE */}
+            <div className="tripnest-activity-panel">
 
-              <p>
-                Your trip planning updates will appear here
-                when activity tracking is connected.
-              </p>
+              {activityLoading ? (
+                <div className="tripnest-empty-state">
+                  <LoaderCircle size={27} />
+                  <p>Loading your latest updates...</p>
+                </div>
+              ) : activityError ? (
+                <div className="tripnest-empty-state">
+                  <p>{activityError}</p>
+                  <button type="button" onClick={fetchRecentActivity}>
+                    Try Again
+                  </button>
+                </div>
+              ) : activities.length > 0 ? (
+
+                <div className="tripnest-activity-list">
+
+                  {activities.map((activity, index) => {
+                    const isTrip = activity.action.includes("TRIP");
+                    const isMember = activity.action.includes("MEMBER");
+
+                    const ActivityIcon = isTrip
+                      ? BriefcaseBusiness
+                      : isMember
+                        ? Users
+                        : CalendarDays;
+
+                    return (
+                      <article
+                        className="tripnest-activity-item"
+                        key={activity.id}
+                      >
+
+                        <div className="tripnest-timeline-dot">
+                          <span />
+                        </div>
+
+                        <div
+                          className={`tripnest-activity-icon ${
+                            isTrip
+                              ? "trip-activity"
+                              : isMember
+                                ? "member-activity"
+                                : "itinerary-activity"
+                          }`}
+                        >
+                          <ActivityIcon size={25} />
+                        </div>
+
+                        <div className="tripnest-activity-info">
+
+                          <h3>
+                            {activity.trip?.title ||
+                              activity.details ||
+                              activity.action
+                                .replaceAll("_", " ")
+                                .toLowerCase()
+                                .replace(/\b\w/g, (letter) =>
+                                  letter.toUpperCase()
+                                )}
+                          </h3>
+
+                          <p>
+                            {activity.details || "Travel planning update"}
+                          </p>
+
+                        </div>
+
+                        <time>
+                          {getTimeAgo(activity.createdAt)}
+                        </time>
+
+                      </article>
+                    );
+                  })}
+
+                </div>
+
+              ) : (
+                <div className="tripnest-empty-state">
+                  <CalendarDays size={28} />
+                  <h3>No recent activity</h3>
+                  <p>Your latest travel updates will appear here.</p>
+                </div>
+              )}
+
             </div>
+
+            {/* RIGHT: UPCOMING TRIP */}
+            <div className="tripnest-activity-upcoming">
+
+              {upcomingTrips.length > 0 ? (
+                <>
+                  <div className="tripnest-activity-upcoming-image">
+                    <img
+                      src={getTripImage(upcomingTrips[0])}
+                      alt={upcomingTrips[0].destination}
+                    />
+
+                    <span>
+                      <MapPin size={17} />
+                      {upcomingTrips[0].destination}
+                    </span>
+                  </div>
+
+                  <div className="tripnest-activity-upcoming-info">
+
+                    <span className="tripnest-upcoming-label">
+                      Upcoming Trip
+                    </span>
+
+                    <h2>{upcomingTrips[0].title}</h2>
+
+                    <p>
+                      <CalendarDays size={19} />
+                      {formatTripDates(
+                        upcomingTrips[0].startDate,
+                        upcomingTrips[0].endDate
+                      )}
+                    </p>
+
+                    <Link to="/my-trips">
+                      View Trip <ArrowRight size={18} />
+                    </Link>
+
+                  </div>
+                </>
+              ) : (
+                <div className="tripnest-activity-no-upcoming">
+                  <CalendarDays size={32} />
+                  <h3>No upcoming trip</h3>
+                  <p>Plan your next adventure!</p>
+
+                  <button type="button" onClick={openCreateTrip}>
+                    Plan a Trip <ArrowRight size={16} />
+                  </button>
+                </div>
+              )}
+
+            </div>
+
           </div>
         </section>
-
         {/* OPTIONAL AI SECTION */}
 
         <section className="tripnest-section">
