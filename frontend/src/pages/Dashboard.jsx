@@ -1116,7 +1116,6 @@ const fetchRecentActivity = async () => {
           {/* SECTION HEADING */}
           <div className="tripnest-latest-heading">
             <h2>
-              <CalendarDays size={27} />
               Your Latest Updates
             </h2>
 

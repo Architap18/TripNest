@@ -13,7 +13,7 @@ import Dashboard from "./pages/Dashboard";
 import Itinerary from "./pages/Itinerary";
 import Collaboration from "./pages/Collaboration";
 import Expenses from "./pages/Expenses";
-
+import TripNestAI from "./pages/TripNestAI";
 function LoadingScreen() {
   return (
     <div
@@ -111,6 +111,7 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="/explore" element={<TripNestAI />} />
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

@@ -1950,10 +1950,6 @@
     padding-left: 52px;
   }
 }
-/* ==========================================
-   LATEST UPDATES SECTION
-========================================== */
-
 .tripnest-latest-updates {
   padding: 30px;
   background: #fffaf4;
@@ -1974,13 +1970,9 @@
   align-items: center;
   gap: 14px;
   margin: 0;
-  color: #173b32;
-  font-size: 27px;
+  color: #221a2f;
+  font-size: 35px;
   font-weight: 750;
-}
-
-.tripnest-latest-heading h2 svg {
-  color: #e67e22;
 }
 
 .tripnest-latest-heading > a {
