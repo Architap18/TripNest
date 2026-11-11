@@ -1,4 +1,4 @@
-
+import TravelDocuments from "./TravelDocuments";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -464,18 +464,7 @@ function Itinerary() {
 
             {/* TAB 3: TRAVEL DOCUMENTS */}
             {activeTab === "documents" && (
-              <div className="feature-empty">
-                <FileText size={36} />
-
-                <h2>Travel Documents</h2>
-
-                <p>
-                  Keep your tickets, bookings and travel
-                  documents organized here.
-                </p>
-
-                <p>Document uploads coming soon.</p>
-              </div>
+              <TravelDocuments tripId={tripId} />
             )}
           </>
         )}

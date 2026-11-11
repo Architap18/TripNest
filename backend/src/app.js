@@ -20,6 +20,7 @@ const expenseRoutes = require("./routes/expenseRoutes");
 const activityRoutes = require("./routes/activityRoutes");
 const aiRoutes = require("./routes/aiRoutes");
 const packingRoutes = require("./routes/packingRoutes");
+const documentRoutes = require("./routes/documentRoutes");
 app.use(express.json());
 app.use(cookieParser());
 
@@ -39,5 +40,5 @@ app.use("/api/expenses", expenseRoutes);
 app.use("/api/activity", activityRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/packing", packingRoutes);
-
+app.use("/api/documents", documentRoutes);
 module.exports = app;

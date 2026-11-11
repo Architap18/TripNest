@@ -25,6 +25,7 @@ model User {
   savedPlaces      SavedPlace[]
   expenses         Expense[]
   activities       Activity[]
+  uploadedDocuments TripDocument[]
 }
 
 enum TripStatus {
@@ -69,6 +70,7 @@ model Trip {
   expenses   Expense[]
   activities Activity[]
   packingItems PackingItem[]
+  documents TripDocument[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -176,4 +178,22 @@ model PackingItem {
   trip   Trip @relation(fields: [tripId], references: [id], onDelete: Cascade)
 
   @@index([tripId])
+}
+model TripDocument {
+  id           String   @id @default(uuid())
+  fileName     String
+  blobUrl      String
+  pathname     String   @unique
+  contentType  String
+  size         Int
+  createdAt    DateTime @default(now())
+
+  tripId       String
+  trip         Trip     @relation(fields: [tripId], references: [id], onDelete: Cascade)
+
+  uploadedById String
+  uploadedBy   User     @relation(fields: [uploadedById], references: [id], onDelete: Cascade)
+
+  @@index([tripId])
+  @@index([uploadedById])
 }

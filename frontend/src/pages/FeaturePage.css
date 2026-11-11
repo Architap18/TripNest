@@ -855,3 +855,101 @@
   color: #6842c2;
   box-shadow: 0 2px 8px #0000000d;
 }
+
+.travel-documents {
+  margin-top: 25px;
+}
+
+.documents-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.documents-heading h2 {
+  margin: 0 0 6px;
+  color: #30234b;
+}
+
+.documents-heading p,
+.documents-hint {
+  color: #81758f;
+  font-size: 14px;
+}
+
+.documents-list {
+  display: grid;
+  gap: 14px;
+  margin-top: 22px;
+}
+
+.document-card {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 18px;
+  background: white;
+  border: 1px solid #eee7f8;
+  border-radius: 14px;
+}
+
+.document-icon {
+  display: grid;
+  place-items: center;
+  min-width: 48px;
+  height: 48px;
+  color: #8054c7;
+  background: #f1eaff;
+  border-radius: 12px;
+}
+
+.document-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.document-info h3 {
+  margin: 0 0 6px;
+  color: #30234b;
+  overflow-wrap: anywhere;
+}
+
+.document-info p {
+  margin: 0;
+  color: #897e96;
+  font-size: 13px;
+}
+
+.document-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.document-actions button {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: none;
+  border-radius: 9px;
+  color: #7550b5;
+  background: #f4effb;
+  cursor: pointer;
+}
+
+.document-actions button:hover {
+  background: #e9ddfa;
+}
+
+@media (max-width: 550px) {
+  .document-card {
+    flex-wrap: wrap;
+  }
+
+  .document-actions {
+    margin-left: auto;
+  }
+}
