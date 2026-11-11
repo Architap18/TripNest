@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import {
   MapContainer,
@@ -6,6 +7,7 @@ import {
   Popup,
   useMap,
 } from "react-leaflet";
+
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -32,6 +34,7 @@ function MapBounds({ locations }) {
       const bounds = L.latLngBounds(
         locations.map((item) => [item.lat, item.lon])
       );
+
       map.fitBounds(bounds, { padding: [40, 40] });
     }
   }, [locations, map]);
@@ -39,7 +42,21 @@ function MapBounds({ locations }) {
   return null;
 }
 
-function ItineraryMap({ items, destination }) {
+// Search OpenStreetMap for a location.
+const geocodeLocation = async (query) => {
+  const url =
+    `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(query)}`;
+
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    throw new Error(`Geocoding failed: ${response.status}`);
+  }
+
+  return response.json();
+};
+
+function ItineraryMap({ items = [], destination = "" }) {
   const [locations, setLocations] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -53,16 +70,22 @@ function ItineraryMap({ items, destination }) {
       const results = [];
 
       for (const item of items) {
-        if (!item.location) continue;
+        if (!item.location?.trim()) continue;
 
         try {
-          const query = `${item.location}, ${destination}`;
-
-          const response = await fetch(
-            `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(query)}`
+          // First search using the activity location alone.
+          let data = await geocodeLocation(
+            `${item.location}, India`
           );
 
-          const data = await response.json();
+          // If no result, try including the trip destination.
+          if (!data.length && destination?.trim()) {
+            data = await geocodeLocation(
+              `${item.location}, ${destination}, India`
+            );
+          }
+
+          if (cancelled) return;
 
           if (data.length > 0) {
             results.push({
@@ -70,13 +93,24 @@ function ItineraryMap({ items, destination }) {
               lat: Number(data[0].lat),
               lon: Number(data[0].lon),
             });
+          } else {
+            console.warn(
+              "No map location found for:",
+              item.location
+            );
           }
         } catch (error) {
-          console.error("Could not find location:", item.location);
+          console.error(
+            "Could not find location:",
+            item.location,
+            error
+          );
         }
 
-        // Respect the public geocoding service's rate limit.
-        await new Promise((resolve) => setTimeout(resolve, 1100));
+        // Respect Nominatim's public rate limit.
+        await new Promise((resolve) =>
+          setTimeout(resolve, 1100)
+        );
 
         if (cancelled) return;
       }
@@ -96,21 +130,28 @@ function ItineraryMap({ items, destination }) {
 
   return (
     <section className="itinerary-map-section">
+
       <div className="itinerary-map-heading">
         <div>
           <h2>Explore your route</h2>
           <p>See your planned activities on the map.</p>
         </div>
+
         <span>{locations.length} locations</span>
       </div>
 
       {loading && (
-        <p className="map-loading">Finding your activity locations...</p>
+        <p className="map-loading">
+          Finding your activity locations...
+        </p>
       )}
 
       {locations.length > 0 ? (
         <MapContainer
-          center={[locations[0].lat, locations[0].lon]}
+          center={[
+            locations[0].lat,
+            locations[0].lon,
+          ]}
           zoom={12}
           scrollWheelZoom={true}
           className="itinerary-map"
@@ -133,10 +174,13 @@ function ItineraryMap({ items, destination }) {
                 <br />
                 {item.location}
                 <br />
-                {new Date(item.dateTime).toLocaleTimeString("en-IN", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
+                {new Date(item.dateTime).toLocaleTimeString(
+                  "en-IN",
+                  {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  }
+                )}
               </Popup>
             </Marker>
           ))}
@@ -145,10 +189,13 @@ function ItineraryMap({ items, destination }) {
         !loading && (
           <div className="map-empty">
             <p>No mappable activities yet.</p>
-            <span>Add activities with a location to see them here.</span>
+            <span>
+              Add activities with a location to see them here.
+            </span>
           </div>
         )
       )}
+
     </section>
   );
 }
