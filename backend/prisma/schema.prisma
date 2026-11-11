@@ -68,10 +68,10 @@ model Trip {
   itinerary  ItineraryItem[]
   expenses   Expense[]
   activities Activity[]
+  packingItems PackingItem[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
   @@index([ownerId])
   @@index([startDate])
 }
@@ -163,4 +163,17 @@ model Activity {
   trip   Trip?   @relation(fields: [tripId], references: [id], onDelete: SetNull)
 
   @@index([userId, createdAt])
+}
+model PackingItem {
+  id        String   @id @default(uuid())
+  name      String
+  category  String   @default("OTHER")
+  isPacked  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tripId String
+  trip   Trip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+
+  @@index([tripId])
 }

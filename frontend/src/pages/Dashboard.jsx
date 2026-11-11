@@ -10,7 +10,6 @@ import {
   MapPin,
   CalendarDays,
   Plus,
-  Compass,
   Wallet,
   Route,
   UserRoundPlus,
@@ -21,7 +20,8 @@ import {
   X,
   LoaderCircle,
   BriefcaseBusiness,
-  Users
+  Users,
+
 } from "lucide-react";
 
 import { useAuth } from "../context/AuthContext";
@@ -1273,36 +1273,15 @@ const fetchRecentActivity = async () => {
         </section>
         {/* OPTIONAL AI SECTION */}
 
-        <section className="tripnest-section">
-          <div className="tripnest-ai-banner">
-            <div className="tripnest-ai-content">
-              <span>
-                <Sparkles size={17} />
-                YOUR OPTIONAL TRAVEL COMPANION
-              </span>
-
-              <h2>Need a little travel inspiration?</h2>
-
-              <p>
-                Get destination ideas, itinerary suggestions and
-                travel tips whenever you need a little help
-                planning your next journey.
-              </p>
-
-              <button
-                type="button"
-                onClick={() => navigate("/explore")}
-              >
-                Explore with TripNest AI
-                <ArrowRight size={17} />
-              </button>
-            </div>
-
-            <div className="tripnest-ai-decoration">
-              <Compass size={105} />
-            </div>
-          </div>
-        </section>
+        <button
+            type="button"
+            className="tripnest-floating-ai"
+            onClick={() => navigate("/explore")}
+            aria-label="Chat with TripNest AI"
+            title="Chat with TripNest AI"
+          >
+            <Sparkles size={26} />
+          </button>
 
         {/* FOOTER */}
 

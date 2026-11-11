@@ -2,7 +2,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@1,500;1,600;1,700&display=swap');
 
 .tripnest-dashboard {
-  --primary: #6945db;
+  --primary: #402697;
   --dark: #211b43;
   --muted: #89839e;
   --border: #eee9f6;
@@ -972,160 +972,51 @@
   background: #e5ddff;
 }
 
-/* POPULAR DESTINATIONS */
-
-.tripnest-destination-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 20px;
-}
-
-.tripnest-destination-card {
-  min-width: 0;
-  overflow: hidden;
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  background: white;
-  transition: 0.25s ease;
-}
-
-.tripnest-destination-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 25px rgba(40, 25, 80, 0.09);
-}
-
-.tripnest-destination-image {
-  height: 190px;
-  position: relative;
-  overflow: hidden;
-}
-
-.tripnest-destination-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.4s ease;
-}
-
-.tripnest-destination-card:hover .tripnest-destination-image img {
-  transform: scale(1.05);
-}
-
-.tripnest-destination-image button {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  width: 36px;
-  height: 36px;
-  display: grid;
-  place-items: center;
-  border: none;
-  border-radius: 50%;
-  background: white;
-  color: #50475f;
-  cursor: pointer;
-}
-
-.tripnest-destination-image button.saved {
-  color: #e44c70;
-}
-
-.tripnest-destination-info {
-  padding: 16px;
-}
-
-.tripnest-destination-info h3 {
-  margin: 0 0 5px;
-  color: var(--dark);
-  font-size: 17px;
-  font-weight: 800;
-}
-
-.tripnest-destination-info p {
-  margin: 0 0 13px;
-  color: var(--muted);
-  font-size: 12px;
-}
-
-.tripnest-destination-info a {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--primary);
-  font-size: 12px;
-  font-weight: 700;
-}
 /* AI BANNER */
 
-.tripnest-ai-banner {
-  position: relative;
-  min-height: 260px;
+.tripnest-floating-ai {
+  position: fixed;
+  right: 28px;
+  bottom: 28px;
+  width: 60px;
+  height: 60px;
+
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 30px;
-  padding: 38px 45px;
-  overflow: hidden;
-  border-radius: 20px;
-  background: linear-gradient(115deg, #29234d, #6550a6);
-  color: white;
-}
+  justify-content: center;
 
-.tripnest-ai-content {
-  position: relative;
-  z-index: 2;
-  max-width: 650px;
-}
+  background: linear-gradient(135deg, #8054ed, #6035c9);
+  color: #ffffff;
 
-.tripnest-ai-content > span {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: #ded3ff;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 1.5px;
-}
-
-.tripnest-ai-content h2 {
-  margin: 15px 0 10px;
-  color: white;
-  font-size: 30px;
-  font-weight: 800;
-}
-
-.tripnest-ai-content p {
-  max-width: 560px;
-  margin: 0 0 22px;
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 14px;
-  line-height: 1.7;
-}
-
-.tripnest-ai-content button {
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
-  padding: 13px 19px;
   border: none;
-  border-radius: 25px;
-  background: white;
-  color: #29234d;
-  font-size: 13px;
-  font-weight: 700;
+  border-radius: 50%;
   cursor: pointer;
-  transition: 0.2s ease;
+
+  box-shadow: 0 6px 22px rgba(96, 53, 201, 0.35);
+
+  z-index: 9999;
+
+  transition: transform 0.25s ease,
+              box-shadow 0.25s ease;
 }
 
-.tripnest-ai-content button:hover {
-  transform: translateY(-2px);
+.tripnest-floating-ai:hover {
+  transform: translateY(-4px) scale(1.06);
+  box-shadow: 0 10px 28px rgba(96, 53, 201, 0.45);
 }
 
-.tripnest-ai-decoration {
-  flex-shrink: 0;
-  color: rgba(255, 255, 255, 0.15);
+.tripnest-floating-ai:active {
+  transform: scale(0.95);
 }
 
+@media (max-width: 600px) {
+  .tripnest-floating-ai {
+    width: 54px;
+    height: 54px;
+    right: 18px;
+    bottom: 18px;
+  }
+}
 /* FOOTER */
 
 .tripnest-footer {
