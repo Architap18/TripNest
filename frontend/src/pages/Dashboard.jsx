@@ -305,10 +305,19 @@ const fetchRecentActivity = async () => {
   }
 };
   useEffect(() => {
-    fetchTrips();
-    fetchRecentActivity();
-  }, []);
-
+  fetchTrips();
+  fetchRecentActivity();
+  fetchSavedPlaces();
+}, []);
+// FETCH SAVED DESTINATIONS
+const fetchSavedPlaces = async () => {
+  try {
+    const data = await apiRequest("/saved-places");
+    setSavedDestinations(data.savedPlaces || data.places || []);
+  } catch (error) {
+    console.error("Failed to fetch saved places:", error);
+  }
+};
   // FETCH ITINERARY FOR THE FIRST TRIP
 
   useEffect(() => {
@@ -532,15 +541,37 @@ const fetchRecentActivity = async () => {
     }
   });
 
-  // SAVED DESTINATIONS
+// SAVE / REMOVE DESTINATIONS
+const toggleSaved = async (destination) => {
+  const existingPlace = savedDestinations.find(
+    (place) =>
+      place.name === destination.name &&
+      place.destination === destination.region
+  );
 
-  const toggleSaved = (name) => {
-    setSavedDestinations((current) =>
-      current.includes(name)
-        ? current.filter((item) => item !== name)
-        : [...current, name]
-    );
-  };
+  try {
+    if (existingPlace) {
+      await apiRequest(`/saved-places/${existingPlace.id}`, {
+        method: "DELETE",
+      });
+    } else {
+      await apiRequest("/saved-places", {
+        method: "POST",
+        body: JSON.stringify({
+          name: destination.name,
+          destination: destination.region,
+          description: "",
+          imageUrl: destination.image,
+        }),
+      });
+    }
+
+    await fetchSavedPlaces();
+  } catch (error) {
+    console.error("Failed to update saved places:", error);
+    alert(error.message || "Could not update saved places.");
+  }
+};
 
   // UPCOMING TRIPS
 
@@ -1097,18 +1128,26 @@ const showAllTrips = () => {
 
                     <button
                       type="button"
-                      onClick={() => toggleSaved(destination.name)}
+                      onClick={() => toggleSaved(destination)}
                       aria-label={`Save ${destination.name}`}
                       className={
-                        savedDestinations.includes(destination.name)
-                          ? "saved"
-                          : ""
-                      }
+                          savedDestinations.some(
+                            (place) =>
+                              place.name === destination.name &&
+                              place.destination === destination.region
+                          )
+                            ? "saved"
+                            : ""
+                        }
                     >
                       <Bookmark
                         size={19}
                         fill={
-                          savedDestinations.includes(destination.name)
+                          savedDestinations.some(
+                            (place) =>
+                              place.name === destination.name &&
+                              place.destination === destination.region
+                          )
                             ? "currentColor"
                             : "none"
                         }

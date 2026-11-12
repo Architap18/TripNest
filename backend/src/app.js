@@ -22,6 +22,7 @@ const aiRoutes = require("./routes/aiRoutes");
 const packingRoutes = require("./routes/packingRoutes");
 const documentRoutes = require("./routes/documentRoutes");
 const profileRoutes = require("./routes/profileRoutes");
+const savedPlaceRoutes = require("./routes/savedPlaceRoutes");
 app.use(express.json());
 app.use(cookieParser());
 
@@ -43,4 +44,5 @@ app.use("/api/ai", aiRoutes);
 app.use("/api/packing", packingRoutes);
 app.use("/api/documents", documentRoutes);
 app.use("/api/profile", profileRoutes);
+app.use("/api/saved-places", savedPlaceRoutes);
 module.exports = app;

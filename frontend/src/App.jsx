@@ -16,6 +16,7 @@ import Expenses from "./pages/Expenses";
 import Packing from "./pages/Packing";
 import TripNestAI from "./pages/TripNestAI";
 import Profile from "./pages/Profile";
+import SavedPlaces from "./pages/SavedPlaces";
 function LoadingScreen() {
   return (
     <div
@@ -102,7 +103,7 @@ function App() {
               </ProtectedRoute>
             }
           />
-
+          <Route path="/saved-places" element={<SavedPlaces />} />
           <Route
             path="/collaboration"
             element={

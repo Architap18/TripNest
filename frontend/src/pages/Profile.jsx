@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
 import { apiRequest, API_URL } from "../services/api";
+import { Link } from "react-router-dom";
 import {
   User,
   SlidersHorizontal,
@@ -643,15 +644,29 @@ const Profile = () => {
 
             {/* Statistics - no icons */}
             <section className="profile-stats-grid">
-              {statCards.map((stat) => (
-                <div className="profile-stat-card" key={stat.label}>
-                  <div className="profile-stat-content">
-                    <h3>{stat.value}</h3>
-                    <p>{stat.label}</p>
-                  </div>
-                </div>
-              ))}
-            </section>
+                  {statCards.map((stat) => (
+                    stat.label === "Saved Places" ? (
+                      <Link
+                        to="/saved-places"
+                        className="profile-stat-card"
+                        key={stat.label}
+                        style={{ textDecoration: "none", color: "inherit" }}
+                      >
+                        <div className="profile-stat-content">
+                          <h3>{stat.value}</h3>
+                          <p>{stat.label}</p>
+                        </div>
+                      </Link>
+                    ) : (
+                      <div className="profile-stat-card" key={stat.label}>
+                        <div className="profile-stat-content">
+                          <h3>{stat.value}</h3>
+                          <p>{stat.label}</p>
+                        </div>
+                      </div>
+                    )
+                  ))}
+                </section>
 
             {/* Personal Information */}
             {activeTab === "personal" && (
