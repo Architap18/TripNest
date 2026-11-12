@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 
 import { useAuth } from "../context/AuthContext";
-import { apiRequest } from "../services/api";
+import { apiRequest, API_URL } from "../services/api";
 import "./Dashboard.css";
 
 // HERO CAROUSEL DATA
@@ -162,32 +162,7 @@ const formatTripDates = (startDate, endDate) => {
 };
 
 const getTripImage = (trip) => {
-  if (trip.coverImage) {
-    return trip.coverImage;
-  }
-
-  const destination = (trip.destination || "").toLowerCase();
-
-  if (destination.includes("goa")) {
-    return "https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=900";
-  }
-
-  if (destination.includes("manali")) {
-    return "https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?w=900";
-  }
-
-  if (destination.includes("munnar")) {
-    return "https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?w=900";
-  }
-
-  if (destination.includes("jaipur")) {
-    return "https://images.unsplash.com/photo-1599661046827-dacff0c0f09a?w=900";
-  }
-  if (destination.includes("kashmir")) {
-    return "https://images.unsplash.com/photo-1595815771614-ade9d652a65d?w=700";  
-  }
-
-  return "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=900";
+  return trip.coverImage || null;
 };
 
 const getStatusLabel = (status) => {
@@ -222,6 +197,7 @@ function Dashboard() {
   const [activeSlide, setActiveSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [profileAvatar, setProfileAvatar] = useState("");
 
   const [trips, setTrips] = useState([]);
   const [activeTripFilter, setActiveTripFilter] = useState("ALL");
@@ -246,7 +222,33 @@ function Dashboard() {
     endDate: "",
     budget: "",
   });
+   useEffect(() => {
+  let objectUrl;
 
+  const loadAvatar = async () => {
+    try {
+      const response = await fetch(`${API_URL}/profile/avatar`, {
+        credentials: "include",
+      });
+
+      if (!response.ok) return;
+
+      const blob = await response.blob();
+      objectUrl = URL.createObjectURL(blob);
+      setProfileAvatar(objectUrl);
+    } catch (error) {
+      console.error("Could not load profile picture:", error);
+    }
+  };
+
+  loadAvatar();
+
+  return () => {
+    if (objectUrl) {
+      URL.revokeObjectURL(objectUrl);
+    }
+  };
+}, []);
   // CALENDAR STATE
 
   const [calendarDate, setCalendarDate] = useState(
@@ -637,7 +639,20 @@ const showAllTrips = () => {
                 onClick={() => setProfileOpen(!profileOpen)}
               >
                 <div className="tripnest-avatar">
-                  {(user?.name || "Traveler").charAt(0).toUpperCase()}
+                  {profileAvatar ? (
+                    <img
+                      src={profileAvatar}
+                      alt="Profile"
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        borderRadius: "50%",
+                        objectFit: "cover",
+                      }}
+                    />
+                  ) : (
+                    (user?.name || "Traveler").charAt(0).toUpperCase()
+                  )}
                 </div>
 
                 <span>Hi, {user?.name || "Traveler"}</span>
@@ -1373,7 +1388,7 @@ const showAllTrips = () => {
           <p>Made for journeys worth remembering.</p>
 
           <span>
-            © 2026 TripNest. Explore more, worry less.
+            2026 TripNest. Explore more, worry less.
           </span>
         </footer>
       </main>

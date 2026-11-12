@@ -65,10 +65,6 @@ function TripNestAI() {
             <h1>TripNest AI</h1>
             <p>Let's plan your next adventure together.</p>
           </div>
-          <div className="ai-status">
-            <span className="ai-status-dot"></span>
-            AI Assistant
-          </div>
         </header>
 
         <main className="ai-messages">

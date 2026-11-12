@@ -1,7 +1,53 @@
 
 const prisma = require("../config/prisma");
 
-// creating new trip
+const OLD_MOUNTAIN_FALLBACK =
+  "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=900";
+
+const getDestinationImage = async (destination) => {
+  const accessKey = process.env.UNSPLASH_ACCESS_KEY;
+
+  if (!accessKey) {
+    console.warn("UNSPLASH_ACCESS_KEY is missing from backend .env");
+    return null;
+  }
+
+  try {
+    const params = new URLSearchParams({
+      query: `${destination} India landmarks travel`,
+      per_page: "1",
+      orientation: "landscape",
+      content_filter: "high",
+    });
+
+    const response = await fetch(
+      `https://api.unsplash.com/search/photos?${params}`,
+      {
+        headers: {
+          Authorization: `Client-ID ${accessKey}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      console.error("Unsplash API error:", response.status);
+      return null;
+    }
+
+    const data = await response.json();
+
+    if (!data.results || data.results.length === 0) {
+      return null;
+    }
+
+    return data.results[0].urls.regular;
+  } catch (error) {
+    console.error("Destination image error:", error.message);
+    return null;
+  }
+};
+
+// CREATE TRIP
 const createTrip = async (req, res) => {
   try {
     const {
@@ -15,14 +61,12 @@ const createTrip = async (req, res) => {
       currency,
     } = req.body;
 
-    // Validate required fields
     if (!title || !destination || !startDate || !endDate) {
       return res.status(400).json({
         message: "Title, destination, start date and end date are required",
       });
     }
 
-    // Validate dates
     const start = new Date(startDate);
     const end = new Date(endDate);
 
@@ -38,24 +82,31 @@ const createTrip = async (req, res) => {
       });
     }
 
-    // Validate budget if provided
     if (
       budget !== undefined &&
       budget !== null &&
-      (budget === "" || !Number.isFinite(Number(budget)) || Number(budget) < 0)
+      (budget === "" ||
+        !Number.isFinite(Number(budget)) ||
+        Number(budget) < 0)
     ) {
       return res.status(400).json({
         message: "Budget must be a valid non-negative number",
       });
     }
 
-    // Create trip in database
+    const cleanDestination = destination.trim();
+
+    // Use a supplied cover image, otherwise fetch one from Unsplash.
+    const finalCoverImage =
+      coverImage?.trim() ||
+      (await getDestinationImage(cleanDestination));
+
     const trip = await prisma.trip.create({
       data: {
         title: title.trim(),
-        destination: destination.trim(),
+        destination: cleanDestination,
         description: description?.trim() || null,
-        coverImage: coverImage || null,
+        coverImage: finalCoverImage,
         startDate: start,
         endDate: end,
         budget:
@@ -63,20 +114,10 @@ const createTrip = async (req, res) => {
             ? Number(budget)
             : null,
         currency: currency || "INR",
-
-        // Get owner ID from authenticated user
         ownerId: req.user.userId,
       },
     });
-    // Record trip creation in Recent Activity
-    await prisma.activity.create({
-      data: {
-        action: "TRIP_CREATED",
-        details: `Created a trip to ${trip.destination}`,
-        userId: req.user.userId,
-        tripId: trip.id,
-      },
-    });
+
     return res.status(201).json({
       message: "Trip created successfully",
       trip,
@@ -90,7 +131,7 @@ const createTrip = async (req, res) => {
   }
 };
 
-// Get all trips for the authenticated user
+// GET ALL TRIPS
 const getMyTrips = async (req, res) => {
   try {
     const trips = await prisma.trip.findMany({
@@ -102,10 +143,38 @@ const getMyTrips = async (req, res) => {
       },
     });
 
+    // Fill missing images and replace the old generic mountain fallback.
+    const updatedTrips = await Promise.all(
+      trips.map(async (trip) => {
+        const needsImage =
+          !trip.coverImage ||
+          trip.coverImage === OLD_MOUNTAIN_FALLBACK;
+
+        if (!needsImage) {
+          return trip;
+        }
+
+        const image = await getDestinationImage(trip.destination);
+
+        if (!image) {
+          return trip;
+        }
+
+        return prisma.trip.update({
+          where: {
+            id: trip.id,
+          },
+          data: {
+            coverImage: image,
+          },
+        });
+      })
+    );
+
     return res.status(200).json({
       message: "Trips fetched successfully",
-      count: trips.length,
-      trips,
+      count: updatedTrips.length,
+      trips: updatedTrips,
     });
   } catch (error) {
     console.error("Get trips error:", error);
@@ -115,14 +184,15 @@ const getMyTrips = async (req, res) => {
     });
   }
 };
-//getting trips by id
+
+// GET TRIP BY ID
 const getTripById = async (req, res) => {
   try {
     const { id } = req.params;
 
     const trip = await prisma.trip.findFirst({
       where: {
-        id: id,
+        id,
         ownerId: req.user.userId,
       },
     });
@@ -145,6 +215,7 @@ const getTripById = async (req, res) => {
     });
   }
 };
+
 module.exports = {
   createTrip,
   getMyTrips,
