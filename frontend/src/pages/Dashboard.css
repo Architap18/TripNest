@@ -32,77 +32,82 @@
 /* NAVBAR */
 
 .tripnest-navbar {
-  min-height: 76px;
-  width: 100%;
-  padding: 10px 5%;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 30px;
-  background: rgba(255, 255, 255, 0.97);
-  border-bottom: 1px solid var(--border);
-  position: sticky;
-  top: 0;
-  z-index: 50;
-}
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
 
-.tripnest-brand {
-  color: #251e47;
-  font-size: 29px;
-  font-weight: 800;
-  letter-spacing: -1.3px;
-  white-space: nowrap;
-  transition: color 0.2s ease;
-}
+  width: calc(100% - 240px);
+  max-width: 1200px;
+  height: 62px;
+  padding: 0 24px;
 
-.tripnest-search {
-  width: min(540px, 50%);
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 18px 20px;
-  border: 1px solid #dedbe4;
-  border-radius: 30px;
-  background: #f9f7ff;
-  color: #948da4;
-}
-
-.tripnest-search input {
-  width: 100%;
-  border: none;
-  outline: none;
-  background: transparent;
-  color: var(--dark);
-  font-size: 14px;
-}
-
-.tripnest-search input::placeholder {
-  color: #aaa4b7;
-}
-
-.tripnest-navbar-right {
-  display: flex;
-  align-items: center;
-  gap: 22px;
-}
-
-.tripnest-notification {
-  width: 42px;
-  height: 42px;
   display: grid;
-  place-items: center;
-  border: 1px solid var(--border);
+  grid-template-columns: 1fr 1fr 1fr;
+  align-items: center;
+
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 35px;
+
+  box-shadow: 0 6px 25px rgba(43, 25, 83, 0.09);
+  z-index: 1000;
+}
+
+
+/* Left spacer */
+.tripnest-navbar-left {
+  grid-column: 1;
+}
+
+/* Centered TripNest name */
+.tripnest-brand {
+  grid-column: 2;
+  justify-self: center;
+
+  color: #292047;
+  font-size: 27px;
+  font-weight: 800;
+  text-decoration: none;
+  letter-spacing: -1px;
+}
+
+/* Right-side controls */
+.tripnest-navbar-right {
+  grid-column: 3;
+  justify-self: end;
+
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+/* Notification button */
+.tripnest-notification {
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
+  border: 1px solid #eee8fa;
   background: white;
-  color: var(--dark);
+  color: #292047;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
   cursor: pointer;
-  transition: 0.2s ease;
+  transition: 0.25s ease;
 }
 
 .tripnest-notification:hover {
-  background: #f5f1ff;
+  background: #f2edff;
+  transform: translateY(-2px);
 }
 
+/* Profile */
 .tripnest-profile-wrapper {
   position: relative;
 }
@@ -110,60 +115,111 @@
 .tripnest-profile {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 11px;
+
   border: none;
   background: transparent;
-  color: var(--dark);
+  color: #292047;
+
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
 }
 
 .tripnest-avatar {
-  width: 38px;
-  height: 38px;
-  display: grid;
-  place-items: center;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
-  background: #eae3ff;
-  color: var(--primary);
-  font-weight: 800;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #eee5ff;
+  color: #5930b5;
+
+  font-size: 17px;
+  font-weight: 700;
 }
 
+/* Profile dropdown */
 .tripnest-profile-menu {
   position: absolute;
-  top: calc(100% + 12px);
+  top: 55px;
   right: 0;
-  width: 180px;
-  padding: 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+
+  min-width: 170px;
+  padding: 10px;
+
   background: white;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(30, 20, 60, 0.12);
-  z-index: 100;
+  border: 1px solid #eee8fa;
+  border-radius: 16px;
+
+  box-shadow: 0 10px 30px rgba(43, 25, 83, 0.12);
+  z-index: 1100;
 }
 
 .tripnest-profile-menu a,
 .tripnest-profile-menu button {
+  width: 100%;
+  padding: 11px 12px;
+
   display: flex;
   align-items: center;
   gap: 9px;
-  padding: 11px 12px;
+
   border: none;
-  border-radius: 8px;
+  border-radius: 9px;
   background: transparent;
-  color: var(--dark);
-  font-size: 13px;
-  text-align: left;
+
+  color: #292047;
+  font-size: 14px;
+  text-decoration: none;
   cursor: pointer;
 }
 
 .tripnest-profile-menu a:hover,
 .tripnest-profile-menu button:hover {
-  background: #f6f3ff;
+  background: #f4efff;
 }
+
+/* Responsive */
+@media (max-width: 650px) {
+  .tripnest-navbar {
+    top: 10px;
+    width: calc(100% - 24px);
+    height: 64px;
+    padding: 0 14px;
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+
+  .tripnest-brand {
+    font-size: 22px;
+  }
+
+  .tripnest-navbar-right {
+    gap: 8px;
+  }
+
+  .tripnest-profile {
+    gap: 5px;
+  }
+
+  .tripnest-profile span {
+    display: none;
+  }
+
+  .tripnest-avatar {
+    width: 36px;
+    height: 36px;
+  }
+
+  .tripnest-notification {
+    width: 38px;
+    height: 38px;
+  }
+}
+
 
 /* MAIN PAGE */
 
@@ -514,6 +570,45 @@
   color: var(--primary);
   font-size: 12px;
   font-weight: 700;
+}
+.tripnest-trip-filters {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 18px 0 20px;
+}
+
+.tripnest-trip-filters button {
+  border: 1px solid #e5dcff;
+  background: #ffffff;
+  color: #1c1925;
+  padding: 9px 18px;
+  border-radius: 25px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.tripnest-trip-filters button:hover {
+  background: #eeeded;
+  color: #393941;
+  
+}
+
+
+
+.tripnest-my-trips-heading > button {
+  background: transparent;
+  border: none;
+  color: #4524a8;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
 }
 
 .tripnest-trip-filters {

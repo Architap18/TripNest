@@ -15,6 +15,7 @@ import Collaboration from "./pages/Collaboration";
 import Expenses from "./pages/Expenses";
 import Packing from "./pages/Packing";
 import TripNestAI from "./pages/TripNestAI";
+import Profile from "./pages/Profile";
 function LoadingScreen() {
   return (
     <div
@@ -76,7 +77,14 @@ function App() {
               </PublicRoute>
             }
           />
-
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/dashboard"
             element={

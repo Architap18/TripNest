@@ -224,6 +224,7 @@ function Dashboard() {
   const [profileOpen, setProfileOpen] = useState(false);
 
   const [trips, setTrips] = useState([]);
+  const [activeTripFilter, setActiveTripFilter] = useState("ALL");
   const [tripsLoading, setTripsLoading] = useState(true);
   const [tripsError, setTripsError] = useState("");
 
@@ -551,65 +552,85 @@ const fetchRecentActivity = async () => {
     return endDate && endDate >= today;
   });
 
+   const filteredTrips = trips.filter((trip) => {
+  const status = (trip.status || "PLANNING").toUpperCase();
+
+  if (activeTripFilter === "ALL") return true;
+
+  if (activeTripFilter === "UPCOMING") {
+    return status === "UPCOMING";
+  }
+
+  if (activeTripFilter === "ONGOING") {
+    return status === "ONGOING";
+  }
+
+  if (activeTripFilter === "COMPLETED") {
+    return status === "COMPLETED";
+  }
+
+  return true;
+});
+
+const showAllTrips = () => {
+  setActiveTripFilter("ALL");
+  document.getElementById("my-trips-section")?.scrollIntoView({
+    behavior: "smooth",
+    block: "center",
+  });
+};
   return (
     <div className="tripnest-dashboard">
 
       {/* NAVBAR */}
 
-      <header className="tripnest-navbar">
-        <Link to="/dashboard" className="tripnest-brand">
-          TripNest
-        </Link>
-
-        <div className="tripnest-search">
-          <Search size={19} />
-          <input
-            type="search"
-            placeholder="Search destinations, trips and places..."
-          />
-        </div>
-
-        <div className="tripnest-navbar-right">
-          <button
-            className="tripnest-notification"
-            aria-label="Notifications"
-            type="button"
-          >
-            <Bell size={21} />
-          </button>
-
-          <div className="tripnest-profile-wrapper">
+      
+        <header className="tripnest-navbar">
+          <div className="tripnest-navbar-left"></div>
+          <Link to="/dashboard" className="tripnest-brand">
+            TripNest
+          </Link>
+          <div className="tripnest-navbar-right">
             <button
-              className="tripnest-profile"
+              className="tripnest-notification"
+              aria-label="Notifications"
               type="button"
-              onClick={() => setProfileOpen(!profileOpen)}
             >
-              <div className="tripnest-avatar">
-                {(user?.name || "Traveler").charAt(0).toUpperCase()}
-              </div>
-
-              <span>Hi, {user?.name || "Traveler"}</span>
-              <ChevronDown size={17} />
+              <Bell size={21} />
             </button>
 
-            {profileOpen && (
-              <div className="tripnest-profile-menu">
-                <Link
-                  to="/profile"
-                  onClick={() => setProfileOpen(false)}
-                >
-                  My Profile
-                </Link>
+            <div className="tripnest-profile-wrapper">
+              <button
+                className="tripnest-profile"
+                type="button"
+                onClick={() => setProfileOpen(!profileOpen)}
+              >
+                <div className="tripnest-avatar">
+                  {(user?.name || "Traveler").charAt(0).toUpperCase()}
+                </div>
 
-                <button type="button" onClick={handleLogout}>
-                  <LogOut size={16} />
-                  Logout
-                </button>
-              </div>
-            )}
+                <span>Hi, {user?.name || "Traveler"}</span>
+                <ChevronDown size={17} />
+              </button>
+
+              {profileOpen && (
+                <div className="tripnest-profile-menu">
+                  <Link
+                    to="/profile"
+                    onClick={() => setProfileOpen(false)}
+                  >
+                    My Profile
+                  </Link>
+
+                  <button type="button" onClick={handleLogout}>
+                    <LogOut size={16} />
+                    Logout
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
 
       <main className="tripnest-page">
 
@@ -737,83 +758,103 @@ const fetchRecentActivity = async () => {
 
             {/* MY TRIPS */}
 
-            <div className="tripnest-my-trips">
+            <div className="tripnest-my-trips" id="my-trips-section">
               <div className="tripnest-my-trips-heading">
                 <h2>My Trips</h2>
 
-                <Link to="/my-trips">
+                <button type="button" onClick={showAllTrips}>
                   View All <ArrowRight size={16} />
-                </Link>
+                </button>
               </div>
 
               <div className="tripnest-trip-filters">
-                <span className="active">All Trips</span>
-                <span>Upcoming</span>
-                <span>Ongoing</span>
-                <span>Completed</span>
-              </div>
-
-              <div className="tripnest-my-trip-list">
-                {tripsLoading ? (
-                  <div className="tripnest-empty-state">
-                    <LoaderCircle size={27} />
-                    <p>Loading your trips...</p>
-                  </div>
-                ) : tripsError ? (
-                  <div className="tripnest-empty-state">
-                    <p className="tripnest-error-message">
-                      {tripsError}
-                    </p>
-
-                    <button type="button" onClick={fetchTrips}>
-                      Try Again
-                    </button>
-                  </div>
-                ) : trips.length === 0 ? (
-                  <div className="tripnest-empty-state">
-                    <h3>No trips yet</h3>
-                    <p>Create your first trip and start planning.</p>
-
-                    <button type="button" onClick={openCreateTrip}>
-                      <Plus size={16} /> Create a Trip
-                    </button>
-                  </div>
-                ) : (
-                  trips.map((trip) => (
-                    <article
-                      className="tripnest-my-trip-card"
-                      key={trip.id}
+                  {[
+                    { label: "All Trips", value: "ALL" },
+                    { label: "Upcoming", value: "UPCOMING" },
+                    { label: "Ongoing", value: "ONGOING" },
+                    { label: "Completed", value: "COMPLETED" },
+                  ].map((filter) => (
+                    <button
+                      type="button"
+                      key={filter.value}
+                      className={
+                        activeTripFilter === filter.value ? "active" : ""
+                      }
+                      onClick={() => setActiveTripFilter(filter.value)}
                     >
-                      <img
-                        src={getTripImage(trip)}
-                        alt={trip.destination}
-                      />
-
-                      <div className="tripnest-my-trip-info">
-                        <h3>{trip.title}</h3>
-
-                        <p>
-                          <CalendarDays size={15} />
-                          {formatTripDates(
-                            trip.startDate,
-                            trip.endDate
-                          )}
-                        </p>
-
-                        <p>
-                          <MapPin size={15} />
-                          {trip.destination}
-                        </p>
-                      </div>
-
-                      <span className="tripnest-trip-status">
-                        {getStatusLabel(trip.status)}
-                      </span>
-                    </article>
-                  ))
-                )}
+                      {filter.label}
+                    </button>
+                  ))}
               </div>
+
+              
+          <div className="tripnest-my-trip-list">
+              {tripsLoading ? (
+                <div className="tripnest-empty-state">
+                  <LoaderCircle size={27} />
+                  <p>Loading your trips...</p>
+                </div>
+              ) : tripsError ? (
+                <div className="tripnest-empty-state">
+                  <p className="tripnest-error-message">
+                    {tripsError}
+                  </p>
+
+                  <button type="button" onClick={fetchTrips}>
+                    Try Again
+                  </button>
+                </div>
+              ) : trips.length === 0 ? (
+                <div className="tripnest-empty-state">
+                  <h3>No trips yet</h3>
+                  <p>Create your first trip and start planning.</p>
+
+                  <button type="button" onClick={openCreateTrip}>
+                    <Plus size={16} /> Create a Trip
+                  </button>
+                </div>
+              ) : filteredTrips.length === 0 ? (
+                <div className="tripnest-empty-state">
+                  <h3>No {activeTripFilter.toLowerCase()} trips</h3>
+                  <p>There are no trips in this category yet.</p>
+                </div>
+              ) : (
+                filteredTrips.map((trip) => (
+                  <article
+                    className="tripnest-my-trip-card"
+                    key={trip.id}
+                  >
+                    <img
+                      src={getTripImage(trip)}
+                      alt={trip.destination}
+                    />
+
+                    <div className="tripnest-my-trip-info">
+                      <h3>{trip.title}</h3>
+
+                      <p>
+                        <CalendarDays size={15} />
+                        {formatTripDates(
+                          trip.startDate,
+                          trip.endDate
+                        )}
+                      </p>
+
+                      <p>
+                        <MapPin size={15} />
+                        {trip.destination}
+                      </p>
+                    </div>
+
+                    <span className="tripnest-trip-status">
+                      {getStatusLabel(trip.status)}
+                    </span>
+                  </article>
+                ))
+              )}
             </div>
+            </div>
+
 
             {/* MY ITINERARY */}
 

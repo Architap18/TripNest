@@ -21,7 +21,12 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     checkAuth();
   }, []);
-
+const updateUser = (updatedData) => {
+  setUser((previous) => ({
+    ...previous,
+    ...updatedData,
+  }));
+};
   const login = async (email, password) => {
     const data = await apiRequest("/auth/login", {
       method: "POST",
@@ -59,6 +64,7 @@ export function AuthProvider({ children }) {
         register,
         logout,
         checkAuth,
+        updateUser,
       }}
     >
       {children}
