@@ -193,7 +193,19 @@ const getTripById = async (req, res) => {
     const trip = await prisma.trip.findFirst({
       where: {
         id,
-        ownerId: req.user.userId,
+        OR: [
+          { ownerId: req.user.userId },
+          { members: { some: { userId: req.user.userId } } },
+        ],
+      },
+      include: {
+        members: {
+          include: {
+            user: {
+              select: { id: true, name: true, email: true, avatarUrl: true },
+            },
+          },
+        },
       },
     });
 
@@ -216,8 +228,163 @@ const getTripById = async (req, res) => {
   }
 };
 
+// UPDATE TRIP
+const updateTrip = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      title,
+      destination,
+      description,
+      coverImage,
+      startDate,
+      endDate,
+      budget,
+      currency,
+      status,
+    } = req.body;
+
+    const existingTrip = await prisma.trip.findFirst({
+      where: {
+        id,
+        OR: [
+          { ownerId: req.user.userId },
+          {
+            members: {
+              some: {
+                userId: req.user.userId,
+                role: "EDITOR",
+              },
+            },
+          },
+        ],
+      },
+    });
+
+    if (!existingTrip) {
+      return res.status(404).json({
+        message: "Trip not found or you do not have permission to edit it",
+      });
+    }
+
+    const updateData = {};
+
+    if (title !== undefined) updateData.title = title.trim();
+    if (description !== undefined) updateData.description = description?.trim() || null;
+    if (currency !== undefined) updateData.currency = currency;
+    if (status !== undefined) updateData.status = status;
+
+    if (startDate) {
+      const parsedStart = new Date(startDate);
+      if (Number.isNaN(parsedStart.getTime())) {
+        return res.status(400).json({ message: "Invalid start date" });
+      }
+      updateData.startDate = parsedStart;
+    }
+
+    if (endDate) {
+      const parsedEnd = new Date(endDate);
+      if (Number.isNaN(parsedEnd.getTime())) {
+        return res.status(400).json({ message: "Invalid end date" });
+      }
+      updateData.endDate = parsedEnd;
+    }
+
+    if (updateData.startDate && updateData.endDate && updateData.endDate < updateData.startDate) {
+      return res.status(400).json({ message: "End date cannot be before start date" });
+    }
+
+    if (budget !== undefined) {
+      if (budget === "" || budget === null) {
+        updateData.budget = null;
+      } else if (!Number.isFinite(Number(budget)) || Number(budget) < 0) {
+        return res.status(400).json({ message: "Budget must be a non-negative number" });
+      } else {
+        updateData.budget = Number(budget);
+      }
+    }
+
+    if (destination !== undefined && destination.trim() !== "") {
+      const cleanDest = destination.trim();
+      updateData.destination = cleanDest;
+
+      if (!coverImage && cleanDest !== existingTrip.destination) {
+        const newImg = await getDestinationImage(cleanDest);
+        if (newImg) updateData.coverImage = newImg;
+      }
+    }
+
+    if (coverImage !== undefined) {
+      updateData.coverImage = coverImage;
+    }
+
+    const updatedTrip = await prisma.trip.update({
+      where: { id },
+      data: updateData,
+    });
+
+    await prisma.activity.create({
+      data: {
+        action: "TRIP_UPDATED",
+        details: `Updated trip "${updatedTrip.title}"`,
+        userId: req.user.userId,
+        tripId: id,
+      },
+    });
+
+    return res.status(200).json({
+      message: "Trip updated successfully",
+      trip: updatedTrip,
+    });
+  } catch (error) {
+    console.error("Update trip error:", error);
+    return res.status(500).json({ message: "Could not update trip" });
+  }
+};
+
+// DELETE TRIP
+const deleteTrip = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const trip = await prisma.trip.findFirst({
+      where: {
+        id,
+        ownerId: req.user.userId,
+      },
+    });
+
+    if (!trip) {
+      return res.status(404).json({
+        message: "Trip not found or you are not the owner",
+      });
+    }
+
+    await prisma.trip.delete({
+      where: { id },
+    });
+
+    await prisma.activity.create({
+      data: {
+        action: "TRIP_DELETED",
+        details: `Deleted trip "${trip.title}"`,
+        userId: req.user.userId,
+      },
+    });
+
+    return res.status(200).json({
+      message: "Trip deleted successfully",
+    });
+  } catch (error) {
+    console.error("Delete trip error:", error);
+    return res.status(500).json({ message: "Could not delete trip" });
+  }
+};
+
 module.exports = {
   createTrip,
   getMyTrips,
   getTripById,
+  updateTrip,
+  deleteTrip,
 };
