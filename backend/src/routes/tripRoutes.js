@@ -1,8 +1,22 @@
 
 const express = require("express");
 const router = express.Router();
+const jwt = require("jsonwebtoken");
 
 const authMiddleware = require("../middleware/authMiddleware");
+
+const optionalAuth = (req, res, next) => {
+  try {
+    const token = req.cookies?.token;
+    if (token) {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      req.user = decoded;
+    }
+  } catch (err) {
+    // continue as unauthenticated guest
+  }
+  next();
+};
 
 const {
   createTrip,
@@ -14,10 +28,12 @@ const {
   getTripSummary,
 } = require("../controllers/tripController");
 
-// All trip routes require authentication
+// Public/shared read-only summary
+router.get("/:id/summary", optionalAuth, getTripSummary);
+
+// Authenticated trip routes
 router.post("/", authMiddleware, createTrip);
 router.get("/", authMiddleware, getMyTrips);
-router.get("/:id/summary", authMiddleware, getTripSummary);
 // Get a single trip
 router.get("/:id", authMiddleware, getTripById);
 router.put("/:id", authMiddleware, updateTrip);

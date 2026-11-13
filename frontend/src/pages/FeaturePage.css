@@ -2900,3 +2900,220 @@
     margin-bottom: 20px;
   }
 }
+
+/* SHARED TRIP PAGE */
+.shared-trip-page {
+  min-height: 100vh;
+  background: var(--feature-bg);
+  color: var(--feature-dark);
+}
+
+.shared-trip-navbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 40px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--feature-border);
+}
+
+.shared-brand {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--feature-primary);
+  text-decoration: none;
+}
+
+.shared-navbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.shared-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--feature-border);
+  background: white;
+  color: var(--feature-dark);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.shared-action-btn:hover {
+  border-color: var(--feature-primary);
+  color: var(--feature-primary);
+}
+
+.shared-action-btn.primary {
+  background: #f4efff;
+  color: var(--feature-primary);
+  border-color: #e5daf7;
+}
+
+.shared-action-btn.primary:hover {
+  background: var(--feature-primary);
+  color: white;
+}
+
+.shared-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  background: var(--feature-primary);
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+
+.shared-cta-btn:hover {
+  opacity: 0.9;
+}
+
+.shared-hero-banner {
+  background-size: cover;
+  background-position: center;
+  padding: 60px 40px;
+  color: white;
+}
+
+.shared-hero-content {
+  width: min(1100px, 100%);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.shared-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.shared-tag {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(8px);
+  padding: 4px 10px;
+  border-radius: 12px;
+}
+
+.shared-status-pill {
+  font-size: 10px;
+  font-weight: 700;
+  background: #10b981;
+  padding: 4px 10px;
+  border-radius: 12px;
+  text-transform: uppercase;
+}
+
+.shared-hero-content h1 {
+  font-size: clamp(28px, 4vw, 42px);
+  font-weight: 800;
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+
+.shared-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  opacity: 0.95;
+}
+
+.shared-meta-row span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.shared-desc {
+  margin: 6px 0 0;
+  font-size: 14px;
+  opacity: 0.9;
+  max-width: 700px;
+  line-height: 1.5;
+}
+
+.shared-main-container {
+  width: min(1100px, 92%);
+  margin: 30px auto 60px;
+}
+
+.shared-nav-tabs {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--feature-border);
+  padding-bottom: 12px;
+  overflow-x: auto;
+}
+
+.shared-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border-radius: 20px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--feature-muted);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+
+.shared-tab-btn:hover {
+  color: var(--feature-dark);
+}
+
+.shared-tab-btn.active {
+  background: white;
+  color: var(--feature-primary);
+  border-color: var(--feature-border);
+  box-shadow: 0 2px 8px rgba(64, 38, 151, 0.05);
+}
+
+.shared-trip-loading,
+.shared-trip-error-wrap {
+  min-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  text-align: center;
+  padding: 20px;
+}
+
+.shared-plane-spin {
+  color: var(--feature-primary);
+  animation: planeSpin 3s linear infinite;
+}
+
+@keyframes planeSpin {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+  100% { transform: translateY(0); }
+}

@@ -530,17 +530,10 @@ const duplicateTrip = async (req, res) => {
 const getTripSummary = async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.user?.userId;
 
     const trip = await prisma.trip.findFirst({
       where: {
         id,
-        ...(userId && {
-          OR: [
-            { ownerId: userId },
-            { members: { some: { userId } } },
-          ],
-        }),
       },
       include: {
         owner: {
