@@ -12,60 +12,57 @@ The application focuses on making travel planning simple, organized, and flexibl
 - Protected application routes.
 - Secure password hashing.
 
-### 2. Dashboard
-- Personalized dashboard.
-- Upcoming, ongoing, and completed trips.
-- Recent activity.
-- Popular destinations.
-- Dynamic destination images for trip cards.
-- Quick access to trip planning features.
+### 2. Dashboard & Interactive Calendar
+- Personalized dashboard with quick statistics.
+- Dynamic upcoming trip departure countdown and progress indicators.
+- Interactive monthly travel calendar (`/calendar`) with month navigation, day inspection, and day-wise activity timeline.
+- Dynamic destination images for trip cards via Unsplash.
 
-### 3. Explore Destinations
-- Discover travel destinations.
-- Save destinations for future reference.
+### 3. Explore & Saved Places
+- Interactive destination discovery page (`/explore`) with category filters (Tropical, Cultural, Mountain, Coastal, Metropolitan).
+- Real-time destination search and instant one-click bucket list bookmarking.
+- Saved places management with direct trip planning transitions.
 
-### 4. Trip Management
-- Create and manage trips.
-- Add trip titles, destinations, descriptions, dates, and budgets.
-- View trip details.
-- Manage trip information.
+### 4. Advanced Trip Management
+- Create, view, update, and delete trips with backend data integrity.
+- Full-text instant search by destination, title, and description.
+- Status filters: Upcoming, Ongoing, Completed, or All.
+- Date range filters: Next 30 Days, Next 90 Days, This Year, Any Date.
+- Multi-criteria sorting: Departure Date, Creation Date, Budget (Low/High).
+- One-click trip duplication cloning destination, dates, budget, and itinerary activities.
 
-### 5. Itinerary Planner
-- Create day-wise travel schedules.
-- Add activities and locations.
-- Organize travel plans by date and time.
+### 5. Itinerary Planner & Printable Export
+- Day-wise activity schedules with locations, start times, and durations.
+- Print-optimized trip dossier (`/trips/:id/share`) with clean typography and `@media print` styling for PDF generation.
+- Read-only shared trip overview for non-authenticated guests and collaborators.
 
-### 6. Collaboration
-- Plan trips with other travelers.
-- Invite members to collaborate.
-- Manage trip participants.
+### 6. Team Collaboration & Role Management
+- Multi-user trip collaboration with email invites.
+- Role management (`VIEWER`, `EDITOR`, `ADMIN`) with backend role update endpoint.
+- Contextual permissions matrix guide for transparent access control.
 
-### 7. Expense Management
-- Add and track trip expenses.
-- Organize expenses.
-- Manage travel budgets.
+### 7. Expense Intelligence & Multi-Currency Analytics
+- Category-wise expense tracking (Transport, Accommodation, Food, Activities, Shopping, Other).
+- Visual stacked progress bar displaying category expenditure distributions.
+- Real-time budget utilization tracker with warning (>90%) and over-budget alert banners.
+- Date and category filter controls on expense records.
+- Built-in multi-currency conversion utility supporting 10 global currencies (INR, USD, EUR, GBP, JPY, AUD, CAD, SGD, AED, THB).
 
-### 8. Packing Checklist
-- Create packing lists.
-- Add and manage packing items.
-- Track completed items.
+### 8. Smart Packing Experience
+- Standalone packing checklist hub (`/packing`) with trip selector.
+- Predefined categorized packing templates (Clothing, Electronics, Toiletries, Documents, Essentials).
+- Batch packing item insertion (`POST /api/packing/:tripId/batch`).
+- Real-time completion percentage analytics and status filters.
 
-### 9. Travel Documents
-- Upload and manage travel documents.
-- Store flight tickets, hotel bookings, and other travel files.
-- Preview supported documents.
-- Download and delete uploaded files.
+### 9. Notifications & Travel Documents
+- In-app notification center modal with departure alerts and scheduled activity reminders.
+- Upload and manage travel documents with Vercel Blob private storage.
+- Document preview, download, and deletion.
 
-### 10. Saved Places
-- Bookmark destinations.
-- View saved destinations.
-- Remove saved places.
-
-### 11. Profile & Settings
-- Manage personal information.
-- Update profile pictures and cover images.
-- Manage preferences and notification settings.
-- Change passwords.
+### 10. Profile & Settings
+- Manage personal information, avatars, and cover photos.
+- Travel preferences and notification toggles.
+- Secure password update.
 
 ## Technology Stack
 
@@ -177,6 +174,19 @@ The application can be deployed separately:
 - Environment variables are not committed to Git.
 - Trip documents are stored using private file access.
 - Backend endpoints validate access to protected trip resources.
+
+## Testing & Quality Assurance
+
+TripNest includes a comprehensive native test suite covering input sanitization, API validation, and core travel business logic.
+
+To run the backend test suite:
+
+```bash
+cd backend
+npm test
+```
+
+Tests run with Node's native test runner (`node --test`), verifying 19 test cases across validation middleware, trip status classifications, budget utilization analytics, and packing list calculations without extra external test dependencies.
 
 ## Future Enhancements
 
