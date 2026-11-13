@@ -3,6 +3,7 @@ const express = require("express");
 const router = express.Router();
 
 const authMiddleware = require("../middleware/authMiddleware");
+const { validateExpenseInput } = require("../middleware/validationMiddleware");
 
 const {
   getExpenses,
@@ -14,8 +15,8 @@ const {
 router.use(authMiddleware);
 
 router.get("/:tripId", getExpenses);
-router.post("/:tripId", createExpense);
-router.put("/:tripId/:expenseId", updateExpense);
+router.post("/:tripId", validateExpenseInput, createExpense);
+router.put("/:tripId/:expenseId", validateExpenseInput, updateExpense);
 router.delete("/:tripId/:expenseId", deleteExpense);
 
 module.exports = router;
