@@ -1089,6 +1089,48 @@
   z-index: 2;
 }
 
+.tripnest-upcoming-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+
+.tripnest-countdown-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(8px);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.2px;
+}
+
+.tripnest-countdown-pill.alt {
+  background: #f4efff;
+  color: var(--tripnest-primary);
+  border-color: #e5daf7;
+}
+
+.tripnest-countdown-pill.today {
+  background: #10b981;
+  border-color: #34d399;
+  color: white;
+  animation: pulseCountdown 2s infinite ease-in-out;
+}
+
+@keyframes pulseCountdown {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+}
+
 .tripnest-upcoming-overlay > span,
 .tripnest-upcoming-empty > span {
   font-size: 11px;

@@ -24,6 +24,7 @@ import {
   Copy,
   Search,
   SlidersHorizontal,
+  Clock,
 } from "lucide-react";
 
 import { useAuth } from "../context/AuthContext";
@@ -164,6 +165,31 @@ const formatTripDates = (startDate, endDate) => {
   const formattedEnd = end.toLocaleDateString("en-IN", options);
 
   return `${formattedStart} – ${formattedEnd}`;
+};
+
+const getTripCountdown = (startDate) => {
+  if (!startDate) return null;
+  const start = parseLocalDate(startDate);
+  if (!start) return null;
+  start.setHours(0, 0, 0, 0);
+
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const diffMs = start.getTime() - today.getTime();
+
+  if (diffMs === 0) {
+    return { isToday: true, label: "Departing Today! 🎉" };
+  }
+  if (diffMs < 0) {
+    return { isPast: true, label: "In Progress" };
+  }
+
+  const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  return {
+    isUpcoming: true,
+    days,
+    label: days === 1 ? "Departs Tomorrow" : `Departs in ${days} days`,
+  };
 };
 
 const getTripImage = (trip) => {
@@ -1259,7 +1285,19 @@ const showAllTrips = () => {
                   />
 
                   <div className="tripnest-upcoming-overlay">
-                    <span>Upcoming Trip</span>
+                    <div className="tripnest-upcoming-header-row">
+                      <span>Upcoming Trip</span>
+                      {(() => {
+                        const countdown = getTripCountdown(upcomingTrips[0].startDate);
+                        if (!countdown) return null;
+                        return (
+                          <div className={`tripnest-countdown-pill ${countdown.isToday ? "today" : ""}`}>
+                            <Clock size={12} />
+                            <span>{countdown.label}</span>
+                          </div>
+                        );
+                      })()}
+                    </div>
                     <h2>{upcomingTrips[0].destination}</h2>
 
                     <p>
@@ -1582,9 +1620,21 @@ const showAllTrips = () => {
 
                   <div className="tripnest-activity-upcoming-info">
 
-                    <span className="tripnest-upcoming-label">
-                      Upcoming Trip
-                    </span>
+                    <div className="tripnest-upcoming-header-row">
+                      <span className="tripnest-upcoming-label">
+                        Upcoming Trip
+                      </span>
+                      {(() => {
+                        const countdown = getTripCountdown(upcomingTrips[0].startDate);
+                        if (!countdown) return null;
+                        return (
+                          <div className={`tripnest-countdown-pill alt ${countdown.isToday ? "today" : ""}`}>
+                            <Clock size={12} />
+                            <span>{countdown.label}</span>
+                          </div>
+                        );
+                      })()}
+                    </div>
 
                     <h2>{upcomingTrips[0].title}</h2>
 
