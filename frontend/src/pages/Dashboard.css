@@ -641,6 +641,80 @@
   
 }
 
+.tripnest-trip-sort-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: -6px 0 18px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+}
+
+.tripnest-sort-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.tripnest-sort-select {
+  border: 1px solid var(--border);
+  background: #ffffff;
+  color: var(--dark);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 5px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  outline: none;
+}
+
+.tripnest-sort-select:focus {
+  border-color: var(--primary);
+}
+
+.tripnest-date-filter-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.tripnest-date-filter-control input[type="date"] {
+  border: 1px solid var(--border);
+  background: #ffffff;
+  color: var(--dark);
+  font-family: inherit;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  outline: none;
+}
+
+.tripnest-date-separator {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.tripnest-clear-date-filter {
+  background: transparent;
+  border: none;
+  color: #d93d3d;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 2px 6px;
+  text-decoration: underline;
+}
+
 
 
 .tripnest-my-trips-heading > button {

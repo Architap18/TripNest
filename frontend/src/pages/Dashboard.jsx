@@ -22,6 +22,7 @@ import {
   Users,
   Trash2,
   Search,
+  SlidersHorizontal,
 } from "lucide-react";
 
 import { useAuth } from "../context/AuthContext";
@@ -198,6 +199,8 @@ function Dashboard() {
   const [trips, setTrips] = useState([]);
   const [activeTripFilter, setActiveTripFilter] = useState("ALL");
   const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState("startDate-asc");
+  const [dateRangeFilter, setDateRangeFilter] = useState({ from: "", to: "" });
   const [tripsLoading, setTripsLoading] = useState(true);
   const [tripsError, setTripsError] = useState("");
 
@@ -624,24 +627,56 @@ const upcomingTrips = trips.filter((trip) => {
 });
 
 // Filter trips according to selected tab and search query
-const filteredTrips = trips.filter((trip) => {
-  if (activeTripFilter !== "ALL" && getTripCategory(trip) !== activeTripFilter) {
-    return false;
-  }
-
-  if (searchQuery.trim()) {
-    const term = searchQuery.toLowerCase().trim();
-    const matchTitle = trip.title?.toLowerCase().includes(term);
-    const matchDestination = trip.destination?.toLowerCase().includes(term);
-    const matchDescription = trip.description?.toLowerCase().includes(term);
-
-    if (!matchTitle && !matchDestination && !matchDescription) {
+const filteredTrips = trips
+  .filter((trip) => {
+    if (activeTripFilter !== "ALL" && getTripCategory(trip) !== activeTripFilter) {
       return false;
     }
-  }
 
-  return true;
-});
+    if (searchQuery.trim()) {
+      const term = searchQuery.toLowerCase().trim();
+      const matchTitle = trip.title?.toLowerCase().includes(term);
+      const matchDestination = trip.destination?.toLowerCase().includes(term);
+      const matchDescription = trip.description?.toLowerCase().includes(term);
+
+      if (!matchTitle && !matchDestination && !matchDescription) {
+        return false;
+      }
+    }
+
+    if (dateRangeFilter.from) {
+      const fromTime = new Date(dateRangeFilter.from).getTime();
+      const tripStartTime = new Date(trip.startDate).getTime();
+      if (tripStartTime < fromTime) {
+        return false;
+      }
+    }
+
+    if (dateRangeFilter.to) {
+      const toTime = new Date(dateRangeFilter.to).getTime();
+      const tripEndTime = new Date(trip.endDate).getTime();
+      if (tripEndTime > toTime) {
+        return false;
+      }
+    }
+
+    return true;
+  })
+  .sort((a, b) => {
+    switch (sortBy) {
+      case "startDate-desc":
+        return new Date(b.startDate).getTime() - new Date(a.startDate).getTime();
+      case "createdAt-desc":
+        return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+      case "budget-desc":
+        return Number(b.budget || 0) - Number(a.budget || 0);
+      case "budget-asc":
+        return Number(a.budget || 0) - Number(b.budget || 0);
+      case "startDate-asc":
+      default:
+        return new Date(a.startDate).getTime() - new Date(b.startDate).getTime();
+    }
+  });
 
 const showAllTrips = () => {
   setActiveTripFilter("ALL");
@@ -892,6 +927,54 @@ const showAllTrips = () => {
                       {filter.label}
                     </button>
                   ))}
+              </div>
+
+              <div className="tripnest-trip-sort-row">
+                <div className="tripnest-sort-control">
+                  <SlidersHorizontal size={14} />
+                  <label htmlFor="trip-sort-select">Sort:</label>
+                  <select
+                    id="trip-sort-select"
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="tripnest-sort-select"
+                    aria-label="Sort trips"
+                  >
+                    <option value="startDate-asc">Departure: Earliest first</option>
+                    <option value="startDate-desc">Departure: Latest first</option>
+                    <option value="createdAt-desc">Recently Created</option>
+                    <option value="budget-desc">Budget: High to Low</option>
+                    <option value="budget-asc">Budget: Low to High</option>
+                  </select>
+                </div>
+
+                <div className="tripnest-date-filter-control">
+                  <CalendarDays size={14} />
+                  <input
+                    type="date"
+                    value={dateRangeFilter.from}
+                    onChange={(e) => setDateRangeFilter((prev) => ({ ...prev, from: e.target.value }))}
+                    title="From date"
+                    aria-label="Filter from date"
+                  />
+                  <span className="tripnest-date-separator">to</span>
+                  <input
+                    type="date"
+                    value={dateRangeFilter.to}
+                    onChange={(e) => setDateRangeFilter((prev) => ({ ...prev, to: e.target.value }))}
+                    title="To date"
+                    aria-label="Filter to date"
+                  />
+                  {(dateRangeFilter.from || dateRangeFilter.to) && (
+                    <button
+                      type="button"
+                      className="tripnest-clear-date-filter"
+                      onClick={() => setDateRangeFilter({ from: "", to: "" })}
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
               </div>
 
               
