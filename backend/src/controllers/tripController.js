@@ -526,6 +526,92 @@ const duplicateTrip = async (req, res) => {
   }
 };
 
+// GET TRIP SUMMARY FOR EXPORT & SHARING
+const getTripSummary = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user?.userId;
+
+    const trip = await prisma.trip.findFirst({
+      where: {
+        id,
+        ...(userId && {
+          OR: [
+            { ownerId: userId },
+            { members: { some: { userId } } },
+          ],
+        }),
+      },
+      include: {
+        owner: {
+          select: { name: true },
+        },
+        itinerary: {
+          orderBy: { dateTime: "asc" },
+        },
+        expenses: {
+          select: { amount: true, category: true },
+        },
+        packingItems: {
+          select: { isPacked: true, category: true },
+        },
+        _count: {
+          select: { members: true },
+        },
+      },
+    });
+
+    if (!trip) {
+      return res.status(404).json({ message: "Trip not found" });
+    }
+
+    const totalSpent = trip.expenses.reduce(
+      (sum, e) => sum + Number(e.amount),
+      0
+    );
+    const budget = trip.budget !== null ? Number(trip.budget) : null;
+    const remaining = budget !== null ? budget - totalSpent : null;
+
+    const packingTotal = trip.packingItems.length;
+    const packingPacked = trip.packingItems.filter((i) => i.isPacked).length;
+
+    return res.status(200).json({
+      trip: {
+        id: trip.id,
+        title: trip.title,
+        destination: trip.destination,
+        description: trip.description,
+        coverImage: trip.coverImage,
+        startDate: trip.startDate,
+        endDate: trip.endDate,
+        status: trip.status,
+        budget,
+        currency: trip.currency,
+        ownerName: trip.owner.name,
+        collaboratorCount: trip._count.members,
+        itinerary: trip.itinerary,
+        expenseSummary: {
+          totalSpent,
+          budget,
+          remaining,
+          expenseCount: trip.expenses.length,
+        },
+        packingSummary: {
+          total: packingTotal,
+          packed: packingPacked,
+          percentage:
+            packingTotal > 0
+              ? Math.round((packingPacked / packingTotal) * 100)
+              : 0,
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Get trip summary error:", error);
+    return res.status(500).json({ message: "Could not fetch trip summary" });
+  }
+};
+
 module.exports = {
   createTrip,
   getMyTrips,
@@ -533,4 +619,5 @@ module.exports = {
   updateTrip,
   deleteTrip,
   duplicateTrip,
+  getTripSummary,
 };

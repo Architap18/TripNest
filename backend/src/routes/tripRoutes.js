@@ -11,11 +11,13 @@ const {
   updateTrip,
   deleteTrip,
   duplicateTrip,
+  getTripSummary,
 } = require("../controllers/tripController");
 
 // All trip routes require authentication
 router.post("/", authMiddleware, createTrip);
 router.get("/", authMiddleware, getMyTrips);
+router.get("/:id/summary", authMiddleware, getTripSummary);
 // Get a single trip
 router.get("/:id", authMiddleware, getTripById);
 router.put("/:id", authMiddleware, updateTrip);
