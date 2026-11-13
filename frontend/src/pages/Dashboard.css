@@ -1060,6 +1060,81 @@
   overflow: hidden;
 }
 
+/* SKELETON LOADERS */
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    #f2eef8 0%,
+    #faf8fd 50%,
+    #f2eef8 100%
+  );
+  background-size: 200% 100%;
+  animation: skeletonShimmer 1.5s infinite ease-in-out;
+}
+
+@keyframes skeletonShimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.skeleton-card {
+  pointer-events: none;
+  border-color: #eee9f6;
+  opacity: 0.9;
+  background: white;
+}
+
+.skeleton-image-wrap {
+  width: 100%;
+  height: 180px;
+  border-radius: 14px 14px 0 0;
+}
+
+.skeleton-content {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.skeleton-badge {
+  width: 70px;
+  height: 16px;
+  border-radius: 8px;
+}
+
+.skeleton-title {
+  width: 85%;
+  height: 22px;
+  border-radius: 6px;
+}
+
+.skeleton-line {
+  width: 60%;
+  height: 14px;
+  border-radius: 6px;
+}
+
+.skeleton-line.short {
+  width: 40%;
+}
+
+.skeleton-footer {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.skeleton-pill {
+  width: 80px;
+  height: 24px;
+  border-radius: 12px;
+}
+
 .tripnest-trip-progress-fill {
   height: 100%;
   background: linear-gradient(90deg, #6945db, #2cd38a);

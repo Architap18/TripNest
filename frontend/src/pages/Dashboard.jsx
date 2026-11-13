@@ -29,6 +29,7 @@ import {
 
 import { useAuth } from "../context/AuthContext";
 import { apiRequest, API_URL } from "../services/api";
+import { TripGridSkeleton } from "../components/SkeletonLoader";
 import "./Dashboard.css";
 
 // HERO CAROUSEL DATA
@@ -1224,10 +1225,7 @@ const showAllTrips = () => {
               
           <div className="tripnest-my-trip-list">
               {tripsLoading ? (
-                <div className="tripnest-empty-state">
-                  <LoaderCircle size={27} />
-                  <p>Loading your trips...</p>
-                </div>
+                <TripGridSkeleton count={3} />
               ) : tripsError ? (
                 <div className="tripnest-empty-state">
                   <p className="tripnest-error-message">
