@@ -134,12 +134,59 @@ const createTrip = async (req, res) => {
 // GET ALL TRIPS
 const getMyTrips = async (req, res) => {
   try {
+    const { search, status, sortBy = "startDate", order = "asc", from, to } = req.query;
+
+    const whereClause = {
+      OR: [
+        { ownerId: req.user.userId },
+        { members: { some: { userId: req.user.userId } } },
+      ],
+    };
+
+    if (search && search.trim()) {
+      const term = search.trim();
+      whereClause.AND = whereClause.AND || [];
+      whereClause.AND.push({
+        OR: [
+          { title: { contains: term, mode: "insensitive" } },
+          { destination: { contains: term, mode: "insensitive" } },
+        ],
+      });
+    }
+
+    if (status && status !== "ALL") {
+      whereClause.AND = whereClause.AND || [];
+      whereClause.AND.push({ status });
+    }
+
+    if (from || to) {
+      whereClause.AND = whereClause.AND || [];
+      const dateFilter = {};
+      if (from && !Number.isNaN(new Date(from).getTime())) dateFilter.gte = new Date(from);
+      if (to && !Number.isNaN(new Date(to).getTime())) dateFilter.lte = new Date(to);
+      if (Object.keys(dateFilter).length > 0) {
+        whereClause.AND.push({ startDate: dateFilter });
+      }
+    }
+
+    const validSortFields = ["startDate", "endDate", "createdAt", "budget", "title"];
+    const sortField = validSortFields.includes(sortBy) ? sortBy : "startDate";
+    const sortOrder = order === "desc" ? "desc" : "asc";
+
     const trips = await prisma.trip.findMany({
-      where: {
-        ownerId: req.user.userId,
+      where: whereClause,
+      include: {
+        _count: {
+          select: {
+            members: true,
+            itinerary: true,
+            expenses: true,
+            packingItems: true,
+          },
+        },
       },
       orderBy: {
-        startDate: "asc",
+        [sortField]: sortOrder,
       },
     });
 
@@ -166,6 +213,16 @@ const getMyTrips = async (req, res) => {
           },
           data: {
             coverImage: image,
+          },
+          include: {
+            _count: {
+              select: {
+                members: true,
+                itinerary: true,
+                expenses: true,
+                packingItems: true,
+              },
+            },
           },
         });
       })

@@ -21,7 +21,7 @@ import {
   BriefcaseBusiness,
   Users,
   Trash2,
-
+  Search,
 } from "lucide-react";
 
 import { useAuth } from "../context/AuthContext";
@@ -197,6 +197,7 @@ function Dashboard() {
 
   const [trips, setTrips] = useState([]);
   const [activeTripFilter, setActiveTripFilter] = useState("ALL");
+  const [searchQuery, setSearchQuery] = useState("");
   const [tripsLoading, setTripsLoading] = useState(true);
   const [tripsError, setTripsError] = useState("");
 
@@ -622,13 +623,24 @@ const upcomingTrips = trips.filter((trip) => {
   return getTripCategory(trip) === "UPCOMING";
 });
 
-// Filter trips according to selected tab
+// Filter trips according to selected tab and search query
 const filteredTrips = trips.filter((trip) => {
-  if (activeTripFilter === "ALL") {
-    return true;
+  if (activeTripFilter !== "ALL" && getTripCategory(trip) !== activeTripFilter) {
+    return false;
   }
 
-  return getTripCategory(trip) === activeTripFilter;
+  if (searchQuery.trim()) {
+    const term = searchQuery.toLowerCase().trim();
+    const matchTitle = trip.title?.toLowerCase().includes(term);
+    const matchDestination = trip.destination?.toLowerCase().includes(term);
+    const matchDescription = trip.description?.toLowerCase().includes(term);
+
+    if (!matchTitle && !matchDestination && !matchDescription) {
+      return false;
+    }
+  }
+
+  return true;
 });
 
 const showAllTrips = () => {
@@ -837,6 +849,29 @@ const showAllTrips = () => {
                 <button type="button" onClick={showAllTrips}>
                   View All <ArrowRight size={16} />
                 </button>
+              </div>
+
+              <div className="tripnest-trip-search-row">
+                <div className="tripnest-trip-search-input">
+                  <Search size={16} />
+                  <input
+                    type="text"
+                    placeholder="Search trips by destination or title..."
+                    value={searchQuery}
+                    onChange={(event) => setSearchQuery(event.target.value)}
+                    aria-label="Search trips"
+                  />
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      className="tripnest-search-clear-btn"
+                      onClick={() => setSearchQuery("")}
+                      aria-label="Clear search"
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
               </div>
 
               <div className="tripnest-trip-filters">
