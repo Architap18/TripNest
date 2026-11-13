@@ -4,9 +4,10 @@ import { Link } from "react-router-dom";
 import {
   ArrowLeft, Plus, Pencil, Trash2, Wallet,
   TrendingUp, Receipt, X, AlertTriangle, CheckCircle2,
-  Calendar, Flame, Search, Filter, ArrowUpDown, RotateCcw
+  Calendar, Flame, Search, Filter, ArrowUpDown, RotateCcw, Coins
 } from "lucide-react";
 import { apiRequest } from "../services/api";
+import CurrencyConverter from "../components/CurrencyConverter";
 import "./FeaturePage.css";
 
 const categories = [
@@ -58,6 +59,7 @@ function Expenses() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const [showConverter, setShowConverter] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(emptyForm);
 
@@ -277,13 +279,23 @@ function Expenses() {
             <h1>Track Expenses</h1>
             <p>Keep your trip budget organized and under control.</p>
           </div>
-          <button
-            className="feature-primary"
-            onClick={openAddForm}
-            disabled={!tripId}
-          >
-            <Plus size={17} /> Add Expense
-          </button>
+          <div className="feature-title-actions">
+            <button
+              type="button"
+              className="feature-secondary-btn"
+              onClick={() => setShowConverter(true)}
+              title="Open Currency Converter"
+            >
+              <Coins size={16} /> Currency Converter
+            </button>
+            <button
+              className="feature-primary"
+              onClick={openAddForm}
+              disabled={!tripId}
+            >
+              <Plus size={17} /> Add Expense
+            </button>
+          </div>
         </div>
 
         <div className="feature-toolbar">
@@ -804,6 +816,14 @@ function Expenses() {
           </form>
         </div>
       )}
+
+      <CurrencyConverter
+        isOpen={showConverter}
+        onClose={() => setShowConverter(false)}
+        tripCurrency={summary.currency || "INR"}
+        tripTotalSpent={summary.totalSpent || 0}
+        tripRemaining={summary.remaining}
+      />
     </main>
   );
 }
