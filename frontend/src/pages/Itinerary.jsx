@@ -13,6 +13,9 @@ import {
   X,
   Luggage,
   FileText,
+  Search,
+  Timer,
+  Compass,
 } from "lucide-react";
 
 import { apiRequest } from "../services/api";
@@ -29,6 +32,15 @@ const emptyForm = {
   category: "SIGHTSEEING",
 };
 
+const itineraryCategoryColors = {
+  SIGHTSEEING: { bg: "#eef2ff", text: "#4338ca", border: "#c7d2fe" },
+  FOOD: { bg: "#fff7ed", text: "#c2410c", border: "#fed7aa" },
+  TRANSPORT: { bg: "#f0fdf4", text: "#15803d", border: "#bbf7d0" },
+  ACTIVITY: { bg: "#faf5ff", text: "#7e22ce", border: "#e9d5ff" },
+  SHOPPING: { bg: "#fdf2f8", text: "#be185d", border: "#fbcfe8" },
+  OTHER: { bg: "#f3f4f6", text: "#374151", border: "#e5e7eb" },
+};
+
 function Itinerary() {
   const [trips, setTrips] = useState([]);
   const [tripId, setTripId] = useState("");
@@ -43,6 +55,8 @@ function Itinerary() {
   const [form, setForm] = useState(emptyForm);
 
   const [activeTab, setActiveTab] = useState("itinerary");
+  const [selectedDayFilter, setSelectedDayFilter] = useState("ALL");
+  const [activitySearch, setActivitySearch] = useState("");
 
   // LOAD TRIPS
   useEffect(() => {
@@ -91,9 +105,37 @@ function Itinerary() {
 
   const selectedTrip = trips.find((trip) => trip.id === tripId);
 
+  // FILTER ACTIVITIES BY SEARCH
+  const filteredItems = useMemo(() => {
+    if (!activitySearch.trim()) return items;
+    const q = activitySearch.toLowerCase();
+    return items.filter(
+      (item) =>
+        item.title?.toLowerCase().includes(q) ||
+        item.description?.toLowerCase().includes(q) ||
+        item.location?.toLowerCase().includes(q) ||
+        item.category?.toLowerCase().includes(q)
+    );
+  }, [items, activitySearch]);
+
+  // UNIQUE DATES ORDERED CHRONOLOGICALLY
+  const uniqueDates = useMemo(() => {
+    const dates = [];
+    items.forEach((item) => {
+      const date = new Date(item.dateTime).toLocaleDateString("en-IN", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      });
+      if (!dates.includes(date)) dates.push(date);
+    });
+    return dates;
+  }, [items]);
+
   // GROUP ACTIVITIES BY DATE
   const groupedItems = useMemo(() => {
-    return items.reduce((groups, item) => {
+    return filteredItems.reduce((groups, item) => {
       const date = new Date(item.dateTime).toLocaleDateString(
         "en-IN",
         {
@@ -112,7 +154,7 @@ function Itinerary() {
 
       return groups;
     }, {});
-  }, [items]);
+  }, [filteredItems]);
 
   // ADD ACTIVITY
   const openAddForm = () => {
@@ -355,7 +397,7 @@ function Itinerary() {
                   destination={selectedTrip?.destination || ""}
                 />
 
-                {Object.keys(groupedItems).length === 0 ? (
+                {items.length === 0 ? (
                   <div className="feature-empty">
                     <CalendarDays size={36} />
 
@@ -373,82 +415,191 @@ function Itinerary() {
                     </button>
                   </div>
                 ) : (
-                  <div className="itinerary-timeline">
-                    {Object.entries(groupedItems).map(
-                      ([date, dayItems]) => (
-                        <section
-                          className="itinerary-day"
-                          key={date}
+                  <>
+                    <div className="itinerary-filter-bar">
+                      <div className="itinerary-search-box">
+                        <Search size={15} className="itinerary-search-icon" />
+                        <input
+                          type="text"
+                          placeholder="Search activities, locations, or notes..."
+                          value={activitySearch}
+                          onChange={(e) => setActivitySearch(e.target.value)}
+                        />
+                        {activitySearch && (
+                          <button
+                            type="button"
+                            className="itinerary-search-clear"
+                            onClick={() => setActivitySearch("")}
+                          >
+                            <X size={13} />
+                          </button>
+                        )}
+                      </div>
+
+                      {uniqueDates.length > 1 && (
+                        <div className="itinerary-day-chips">
+                          <button
+                            type="button"
+                            className={`itinerary-day-chip ${selectedDayFilter === "ALL" ? "active" : ""}`}
+                            onClick={() => setSelectedDayFilter("ALL")}
+                          >
+                            All Days ({items.length})
+                          </button>
+                          {uniqueDates.map((date, idx) => {
+                            const count = items.filter((it) => {
+                              const itDate = new Date(it.dateTime).toLocaleDateString("en-IN", {
+                                weekday: "long",
+                                day: "numeric",
+                                month: "long",
+                                year: "numeric",
+                              });
+                              return itDate === date;
+                            }).length;
+                            return (
+                              <button
+                                key={date}
+                                type="button"
+                                className={`itinerary-day-chip ${selectedDayFilter === date ? "active" : ""}`}
+                                onClick={() => setSelectedDayFilter(date)}
+                              >
+                                Day {idx + 1} ({count})
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+
+                    {filteredItems.length === 0 ? (
+                      <div className="feature-empty">
+                        <Search size={32} />
+                        <h3>No activities match your search</h3>
+                        <p>Try searching for a different activity or location.</p>
+                        <button
+                          className="feature-primary"
+                          onClick={() => setActivitySearch("")}
                         >
-                          <h2>{date}</h2>
+                          Clear Search
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="itinerary-timeline">
+                        {Object.entries(groupedItems)
+                          .filter(([date]) => selectedDayFilter === "ALL" || selectedDayFilter === date)
+                          .map(([date, dayItems]) => {
+                            const dayIndex = uniqueDates.indexOf(date);
+                            const dayNumber = dayIndex >= 0 ? dayIndex + 1 : 1;
+                            const totalMinutes = dayItems.reduce(
+                              (sum, it) => sum + (Number(it.duration) || 0),
+                              0
+                            );
+                            const totalHours = Math.floor(totalMinutes / 60);
+                            const remainingMins = totalMinutes % 60;
 
-                          {dayItems.map((item) => (
-                            <article
-                              className="itinerary-item"
-                              key={item.id}
-                            >
-                              <div className="itinerary-time">
-                                <Clock size={15} />
+                            return (
+                              <section
+                                className="itinerary-day"
+                                key={date}
+                              >
+                                <div className="itinerary-day-header">
+                                  <div className="itinerary-day-title-row">
+                                    <span className="itinerary-day-badge">Day {dayNumber}</span>
+                                    <h2>{date}</h2>
+                                  </div>
+                                  <div className="itinerary-day-meta">
+                                    <span className="itinerary-meta-pill">
+                                      <Compass size={13} /> {dayItems.length} {dayItems.length === 1 ? "activity" : "activities"}
+                                    </span>
+                                    {totalMinutes > 0 && (
+                                      <span className="itinerary-meta-pill">
+                                        <Timer size={13} /> {totalHours > 0 ? `${totalHours}h ` : ""}{remainingMins > 0 ? `${remainingMins}m` : ""} planned
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
 
-                                {new Date(
-                                  item.dateTime
-                                ).toLocaleTimeString(
-                                  "en-IN",
-                                  {
-                                    hour: "2-digit",
-                                    minute: "2-digit",
-                                  }
-                                )}
-                              </div>
+                                {dayItems.map((item) => {
+                                  const categoryTheme =
+                                    itineraryCategoryColors[item.category] ||
+                                    itineraryCategoryColors.OTHER;
 
-                              <div className="itinerary-item-body">
-                                <span className="itinerary-category">
-                                  {item.category || "ACTIVITY"}
-                                </span>
+                                  return (
+                                    <article
+                                      className="itinerary-item"
+                                      key={item.id}
+                                    >
+                                      <div className="itinerary-time">
+                                        <Clock size={15} />
 
-                                <h3>{item.title}</h3>
+                                        {new Date(
+                                          item.dateTime
+                                        ).toLocaleTimeString(
+                                          "en-IN",
+                                          {
+                                            hour: "2-digit",
+                                            minute: "2-digit",
+                                          }
+                                        )}
+                                      </div>
 
-                                {item.description && (
-                                  <p>{item.description}</p>
-                                )}
+                                      <div className="itinerary-item-body">
+                                        <span
+                                          className="itinerary-category"
+                                          style={{
+                                            backgroundColor: categoryTheme.bg,
+                                            color: categoryTheme.text,
+                                            borderColor: categoryTheme.border,
+                                          }}
+                                        >
+                                          {item.category || "ACTIVITY"}
+                                        </span>
 
-                                {item.location && (
-                                  <span className="itinerary-location">
-                                    <MapPin size={14} />
-                                    {item.location}
-                                  </span>
-                                )}
+                                        <h3>{item.title}</h3>
 
-                                {item.duration && (
-                                  <span className="itinerary-location">
-                                    <Clock size={14} />
-                                    {item.duration} minutes
-                                  </span>
-                                )}
-                              </div>
+                                        {item.description && (
+                                          <p>{item.description}</p>
+                                        )}
 
-                              {/* EDIT AND DELETE */}
-                              <div className="itinerary-item-actions">
-                                <button
-                                  onClick={() => openEditForm(item)}
-                                  aria-label="Edit activity"
-                                >
-                                  <Pencil size={16} />
-                                </button>
+                                        {item.location && (
+                                          <span className="itinerary-location">
+                                            <MapPin size={14} />
+                                            {item.location}
+                                          </span>
+                                        )}
 
-                                <button
-                                  onClick={() => deleteItem(item.id)}
-                                  aria-label="Delete activity"
-                                >
-                                  <Trash2 size={16} />
-                                </button>
-                              </div>
-                            </article>
-                          ))}
-                        </section>
-                      )
+                                        {item.duration && (
+                                          <span className="itinerary-location">
+                                            <Timer size={14} />
+                                            {item.duration} minutes
+                                          </span>
+                                        )}
+                                      </div>
+
+                                      {/* EDIT AND DELETE */}
+                                      <div className="itinerary-item-actions">
+                                        <button
+                                          onClick={() => openEditForm(item)}
+                                          aria-label="Edit activity"
+                                        >
+                                          <Pencil size={16} />
+                                        </button>
+
+                                        <button
+                                          onClick={() => deleteItem(item.id)}
+                                          aria-label="Delete activity"
+                                        >
+                                          <Trash2 size={16} />
+                                        </button>
+                                      </div>
+                                    </article>
+                                  );
+                                })}
+                              </section>
+                            );
+                          })}
+                      </div>
                     )}
-                  </div>
+                  </>
                 )}
               </>
             )}
