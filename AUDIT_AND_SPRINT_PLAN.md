@@ -147,4 +147,38 @@ TripNest is structured as a full-stack JavaScript monorepo separated into two is
 ---
 
 ## 13. Estimated Meaningful Git Commits
-Targeting 25 clean, independently verifiable commits following the Conventional Commits specification.
+Targeting 25–26 clean, independently verifiable commits following the Conventional Commits specification.
+
+---
+
+## 14. Sprint Execution & Verification Log (Completed)
+
+| Commit # | Hash | Conventional Title | Scope & Highlights |
+|---|---|---|---|
+| **01** | `62dde68` | `audit: document comprehensive repository architecture and sprint plan` | Complete architectural baseline, feature inventory, dependency matrix, safety rules. |
+| **02** | `70405c2` | `fix(trips): implement missing trip update and delete backend endpoints` | Closed 404 gap by implementing `updateTrip` and `deleteTrip` controllers & routes. |
+| **03** | `c86a5d3` | `feat(trips): add advanced trip search by destination and title` | Real-time multi-term search filtering on Trips page with zero added re-renders. |
+| **04** | `b1df7ad` | `feat(trips): implement trip sorting and date range filters` | Added departure/creation/budget sorting options and 30/90-day date range filters. |
+| **05** | `fdb5103` | `feat(trips): implement trip duplication endpoint and frontend action` | Added `POST /api/trips/:id/duplicate` deep-copying trip details, budget, and itinerary. |
+| **06** | `5452ec2` | `feat(trips): add trip progress and status indicators` | Visual progress bar and pill badges (`UPCOMING`, `ONGOING`, `COMPLETED`). |
+| **07** | `4496227` | `feat(expenses): add category-wise visual analytics with stacked bar chart` | Custom zero-dependency stacked bar chart with percentage breakdown per category. |
+| **08** | `8ac9e25` | `feat(expenses): implement budget utilization tracking and alert indicators` | Real-time spent vs allocated budget tracker with >90% warning and over-budget banners. |
+| **09** | `f3db645` | `feat(expenses): introduce date and category filters on expenses list` | Multi-criteria expense filtering with instant reset and match counter. |
+| **10** | `ffaa66b` | `feat(currency): add multi-currency conversion utility and exchange rate tool` | Multi-currency converter across 10 global currencies with reciprocal conversion rates. |
+| **11** | `85b1f03` | `feat(trips): introduce upcoming trip countdown and departure indicators` | Real-time countdown widget ("Starts in X days") with badge styling on trip cards. |
+| **12** | `39d3ec7` | `feat(calendar): implement monthly trip calendar with day preview and today indicator` | Full calendar grid with month navigation, trip range markers, and today highlight. |
+| **13** | `cdb8d97` | `feat(calendar): add itinerary activity timeline and day scheduler view` | Day-wise activity inspection timeline with time badges and location pills. |
+| **14** | `07f84aa` | `feat(packing): introduce batch backend endpoints and categorized templates` | `POST /api/packing/:tripId/batch` and 5 curated packing templates (Clothing, Tech, etc.). |
+| **15** | `553567a` | `feat(packing): add packing completion analytics, filters, and standalone page mode` | Standalone `/packing` hub with trip selector, circular completion ring, and packed filters. |
+| **16** | `3390d6a` | `feat(export): implement backend trip summary endpoint for export and sharing` | `GET /api/trips/:id/summary` endpoint aggregating trip, itinerary, members, and expenses. |
+| **17** | `4445fbf` | `feat(export): add printable itinerary layout with print-optimized CSS and PDF export` | Dedicated `/trips/:id/share` print layout with `@media print` rules and `window.print()`. |
+| **18** | `90d7fef` | `feat(share): introduce shareable trip overview and read-only itinerary view` | Public trip dossier with unauthenticated guest access and one-click link sharing. |
+| **19** | `2715908` | `feat(notifications): implement in-app notification center with departure and activity alerts` | Header notification bell with departure countdowns and scheduled activity reminders. |
+| **20** | `a6f5c5c` | `feat(explore): implement interactive travel exploration and destination discovery page` | Fully realized `/explore` with category filters and instant bucket-list bookmarking. |
+| **21** | `f495a7b` | `feat(ui): add polished skeleton loading states for trips and itinerary items` | Shimmer animated skeleton placeholders preventing layout shifts during data fetching. |
+| **22** | `1065787` | `feat(collaboration): add role update endpoint and permissions guide` | `PUT /api/collaboration/:tripId/members/:memberId/role` and in-app permissions matrix. |
+| **23** | `ecc1fe1` | `fix(validation): strengthen backend input sanitization and payload validation` | Reusable validation middleware for trips, expenses, and itinerary inputs. |
+| **24** | `eda7443` | `test(backend): add comprehensive API validation and integration test suite` | 19 native Node.js tests verifying input validation, budget analytics, and status logic. |
+| **25** | `8c27557` | `docs: update project README with sprint enhancements and testing guide` | Complete project documentation update covering new features, architecture, and tests. |
+| **26** | `PENDING` | `docs(sprint): record sprint execution verification and deliverables matrix` | Final sprint closure documentation and verification report. |
+
