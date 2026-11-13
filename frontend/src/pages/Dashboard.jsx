@@ -266,6 +266,8 @@ function Dashboard() {
   const [activeSlide, setActiveSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [notificationOpen, setNotificationOpen] = useState(false);
+  const [readNotificationIds, setReadNotificationIds] = useState([]);
   const [profileAvatar, setProfileAvatar] = useState("");
 
   const [trips, setTrips] = useState([]);
@@ -787,6 +789,63 @@ const showAllTrips = () => {
     block: "center",
   });
 };
+
+  const notifications = useMemo(() => {
+    const list = [];
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    // 1. Departure Reminders
+    trips.forEach((t) => {
+      const start = parseLocalDate(t.startDate);
+      if (start) {
+        start.setHours(0, 0, 0, 0);
+        const diffMs = start.getTime() - today.getTime();
+        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+        if (diffDays === 0) {
+          list.push({
+            id: `dep-today-${t.id}`,
+            type: "DEPARTURE",
+            title: `Trip Departure Today! 🎉`,
+            message: `Your adventure to ${t.destination} starts today. Safe travels!`,
+            time: "Today",
+            link: `/itinerary?tripId=${t.id}`,
+            linkText: "View Itinerary",
+          });
+        } else if (diffDays > 0 && diffDays <= 7) {
+          list.push({
+            id: `dep-soon-${t.id}`,
+            type: "DEPARTURE",
+            title: `Upcoming: ${t.destination}`,
+            message: `Departs in ${diffDays} ${diffDays === 1 ? "day" : "days"}. Don't forget your travel checklist!`,
+            time: `${diffDays}d left`,
+            link: `/packing?tripId=${t.id}`,
+            linkText: "Check Packing",
+          });
+        }
+      }
+    });
+
+    // 2. Recent activities from database
+    (activities || []).slice(0, 4).forEach((act) => {
+      list.push({
+        id: `act-${act.id}`,
+        type: "ACTIVITY",
+        title: act.action.replace(/_/g, " "),
+        message: act.details || `Activity recorded on trip`,
+        time: getTimeAgo(act.createdAt),
+        link: act.tripId ? `/itinerary?tripId=${act.tripId}` : null,
+        linkText: "View Trip",
+      });
+    });
+
+    return list;
+  }, [trips, activities]);
+
+  const unreadCount = notifications.filter(
+    (n) => !readNotificationIds.includes(n.id)
+  ).length;
   return (
     <div className="tripnest-dashboard">
 
@@ -799,13 +858,96 @@ const showAllTrips = () => {
             TripNest
           </Link>
           <div className="tripnest-navbar-right">
-            <button
-              className="tripnest-notification"
-              aria-label="Notifications"
-              type="button"
-            >
-              <Bell size={21} />
-            </button>
+            <div className="tripnest-notification-wrapper">
+              <button
+                className="tripnest-notification"
+                aria-label="Notifications"
+                type="button"
+                onClick={() => setNotificationOpen(!notificationOpen)}
+              >
+                <Bell size={21} />
+                {unreadCount > 0 && (
+                  <span className="tripnest-notif-dot">{unreadCount}</span>
+                )}
+              </button>
+
+              {notificationOpen && (
+                <div className="tripnest-notification-menu">
+                  <div className="tripnest-notif-header">
+                    <div className="notif-header-title">
+                      <h3>Notifications</h3>
+                      {unreadCount > 0 && (
+                        <span className="notif-unread-badge">{unreadCount} new</span>
+                      )}
+                    </div>
+                    {notifications.length > 0 && (
+                      <button
+                        type="button"
+                        className="notif-mark-read"
+                        onClick={() =>
+                          setReadNotificationIds(notifications.map((n) => n.id))
+                        }
+                      >
+                        Mark all read
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="tripnest-notif-list">
+                    {notifications.length === 0 ? (
+                      <div className="tripnest-notif-empty">
+                        <Bell size={24} />
+                        <p>You're all caught up!</p>
+                        <small>Departure alerts and trip activities will show up here.</small>
+                      </div>
+                    ) : (
+                      notifications.map((notif) => {
+                        const isRead = readNotificationIds.includes(notif.id);
+                        return (
+                          <div
+                            key={notif.id}
+                            className={`tripnest-notif-item ${
+                              isRead ? "read" : "unread"
+                            }`}
+                            onClick={() => {
+                              if (!isRead) {
+                                setReadNotificationIds((prev) => [...prev, notif.id]);
+                              }
+                            }}
+                          >
+                            <div
+                              className={`notif-icon-wrap ${notif.type.toLowerCase()}`}
+                            >
+                              {notif.type === "DEPARTURE" ? (
+                                <Plane size={15} />
+                              ) : (
+                                <Sparkles size={15} />
+                              )}
+                            </div>
+                            <div className="notif-body">
+                              <div className="notif-item-title-row">
+                                <strong>{notif.title}</strong>
+                                <span className="notif-time">{notif.time}</span>
+                              </div>
+                              <p>{notif.message}</p>
+                              {notif.link && (
+                                <Link
+                                  to={notif.link}
+                                  className="notif-action-link"
+                                  onClick={() => setNotificationOpen(false)}
+                                >
+                                  {notif.linkText} <ArrowRight size={11} />
+                                </Link>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
 
             <div className="tripnest-profile-wrapper">
               <button
