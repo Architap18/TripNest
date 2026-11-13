@@ -116,6 +116,19 @@ TripNest/
 └── README.md
 ```
 
+## Environment Variables
+
+
+PORT=5001
+
+DATABASE_URL=your_postgresql_connection_string
+
+JWT_SECRET=your_jwt_secret
+
+UNSPLASH_ACCESS_KEY=your_unsplash_access_key
+
+BLOB_READ_WRITE_TOKEN=your_vercel_blob_token
+
 ## Destination Image Integration
 
 TripNest uses the Unsplash API to retrieve destination-related travel images.
