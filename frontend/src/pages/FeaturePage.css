@@ -2608,3 +2608,295 @@
   line-height: 1.4;
   padding-top: 4px;
 }
+
+/* PRINTABLE ITINERARY MODAL */
+.printable-modal-content {
+  max-width: 860px !important;
+  max-height: 90vh !important;
+  display: flex;
+  flex-direction: column;
+}
+
+.printable-control-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  background: #211b43;
+  color: white;
+}
+
+.printable-bar-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.printable-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.printable-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s ease;
+}
+
+.printable-btn.share {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+}
+
+.printable-btn.share:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.printable-btn.primary {
+  background: var(--feature-primary);
+  color: white;
+}
+
+.printable-btn.primary:hover {
+  background: #5737be;
+}
+
+.printable-btn.close {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  padding: 7px;
+  border-radius: 50%;
+}
+
+.printable-btn.close:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.printable-document-body {
+  padding: 36px 40px;
+  overflow-y: auto;
+  background: white;
+  color: #211b43;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.print-brand-badge span {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  color: var(--feature-primary);
+  background: #f4efff;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.print-trip-title {
+  font-size: 28px;
+  font-weight: 800;
+  color: #1a1538;
+  margin: 12px 0 8px;
+}
+
+.print-trip-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: #645e78;
+}
+
+.print-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.print-trip-description {
+  margin-top: 12px;
+  font-size: 13px;
+  color: #645e78;
+  line-height: 1.5;
+}
+
+.print-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 18px;
+  font-weight: 800;
+  color: #1a1538;
+  margin: 0 0 16px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #eeeaf5;
+}
+
+.print-days-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.print-day-block {
+  border: 1px solid #e7e2f0;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.print-day-header {
+  background: #f8f6fc;
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid #e7e2f0;
+}
+
+.print-day-number {
+  background: var(--feature-primary);
+  color: white;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.print-day-date {
+  font-size: 15px;
+  font-weight: 700;
+  margin: 0;
+  color: #1a1538;
+}
+
+.print-day-count {
+  margin-left: auto;
+  font-size: 11px;
+  color: #7b758e;
+  font-weight: 600;
+}
+
+.print-activities-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.print-activities-table th {
+  background: #faf9fd;
+  text-align: left;
+  padding: 10px 14px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #7b758e;
+  text-transform: uppercase;
+  border-bottom: 1px solid #e7e2f0;
+}
+
+.print-activities-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #f2eef8;
+  vertical-align: top;
+}
+
+.print-time-col {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 700;
+  color: #645e78;
+}
+
+.print-cat-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: #eeeaf8;
+  color: var(--feature-primary);
+}
+
+.print-item-desc {
+  font-size: 12px;
+  color: #645e78;
+  margin: 4px 0 0;
+}
+
+.print-duration {
+  display: inline-block;
+  font-size: 11px;
+  color: #8b859e;
+  margin-top: 4px;
+}
+
+.print-location-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #645e78;
+}
+
+.print-doc-footer {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #e7e2f0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: #8b859e;
+  font-size: 11px;
+}
+
+.print-footer-info {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 600;
+}
+
+/* NATIVE PRINT STYLES */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #printable-trip-dossier,
+  #printable-trip-dossier * {
+    visibility: visible;
+  }
+  #printable-trip-dossier {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0 10mm;
+    background: white !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .printable-modal-backdrop {
+    background: transparent !important;
+    position: static !important;
+    padding: 0 !important;
+  }
+  .printable-modal-content {
+    box-shadow: none !important;
+    border: none !important;
+    max-width: 100% !important;
+  }
+  .print-day-block {
+    page-break-inside: avoid;
+    margin-bottom: 20px;
+  }
+}

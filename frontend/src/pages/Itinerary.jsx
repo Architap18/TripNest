@@ -16,11 +16,13 @@ import {
   Search,
   Timer,
   Compass,
+  Printer,
 } from "lucide-react";
 
 import { apiRequest } from "../services/api";
 import Packing from "./Packing";
 import ItineraryMap from "../components/ItineraryMap";
+import PrintableItineraryModal from "../components/PrintableItineraryModal";
 import "./FeaturePage.css";
 
 const emptyForm = {
@@ -51,6 +53,7 @@ function Itinerary() {
   const [error, setError] = useState("");
 
   const [showForm, setShowForm] = useState(false);
+  const [showPrintModal, setShowPrintModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(emptyForm);
 
@@ -292,15 +295,28 @@ function Itinerary() {
             <p>Organize your trip one activity at a time.</p>
           </div>
 
-          {activeTab === "itinerary" && (
-            <button
-              className="feature-primary"
-              onClick={openAddForm}
-              disabled={!tripId}
-            >
-              <Plus size={17} /> Add Activity
-            </button>
-          )}
+          <div className="feature-title-actions">
+            {activeTab === "itinerary" && (
+              <>
+                <button
+                  type="button"
+                  className="feature-secondary-btn"
+                  onClick={() => setShowPrintModal(true)}
+                  disabled={!tripId || !selectedTrip}
+                  title="Export or print itinerary"
+                >
+                  <Printer size={16} /> Export / Print
+                </button>
+                <button
+                  className="feature-primary"
+                  onClick={openAddForm}
+                  disabled={!tripId}
+                >
+                  <Plus size={17} /> Add Activity
+                </button>
+              </>
+            )}
+          </div>
         </div>
 
         {/* TRIP SELECTOR */}
@@ -753,6 +769,13 @@ function Itinerary() {
           </form>
         </div>
       )}
+
+      <PrintableItineraryModal
+        isOpen={showPrintModal}
+        onClose={() => setShowPrintModal(false)}
+        trip={selectedTrip}
+        items={items}
+      />
     </main>
   );
 }
