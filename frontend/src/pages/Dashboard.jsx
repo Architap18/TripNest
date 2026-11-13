@@ -188,6 +188,51 @@ const getTimeAgo = (date) => {
 
   return `${days} days ago`;
 };
+
+const getTripProgressInfo = (trip) => {
+  const start = new Date(trip.startDate);
+  const end = new Date(trip.endDate);
+  const now = new Date();
+
+  const startDay = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+  const endDay = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  const totalDays = Math.max(1, Math.round((endDay - startDay) / (1000 * 60 * 60 * 24)) + 1);
+
+  if (today < startDay) {
+    const daysUntil = Math.ceil((startDay - today) / (1000 * 60 * 60 * 24));
+    return {
+      statusText: daysUntil === 1 ? "Starts tomorrow" : `Starts in ${daysUntil}d`,
+      type: "UPCOMING",
+      badgeClass: "badge-upcoming",
+      percent: 0,
+      totalDays,
+    };
+  }
+
+  if (today > endDay) {
+    return {
+      statusText: "Completed",
+      type: "COMPLETED",
+      badgeClass: "badge-completed",
+      percent: 100,
+      totalDays,
+    };
+  }
+
+  const elapsedDays = Math.max(1, Math.round((today - startDay) / (1000 * 60 * 60 * 24)) + 1);
+  const percent = Math.min(100, Math.round((elapsedDays / totalDays) * 100));
+
+  return {
+    statusText: `Day ${elapsedDays} of ${totalDays}`,
+    type: "ONGOING",
+    badgeClass: "badge-ongoing",
+    percent,
+    totalDays,
+  };
+};
+
 function Dashboard() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -1023,57 +1068,87 @@ const showAllTrips = () => {
                   <p>There are no trips in this category yet.</p>
                 </div>
               ) : (
-                filteredTrips.map((trip) => (
-                  <article
-                    className="tripnest-my-trip-card"
-                    key={trip.id}
-                  >
-                    <img
-                      src={getTripImage(trip)}
-                      alt={trip.destination}
-                    />
+                filteredTrips.map((trip) => {
+                  const progressInfo = getTripProgressInfo(trip);
 
-                    <div className="tripnest-my-trip-info">
-                      <h3>{trip.title}</h3>
+                  return (
+                    <article
+                      className="tripnest-my-trip-card"
+                      key={trip.id}
+                    >
+                      <img
+                        src={getTripImage(trip)}
+                        alt={trip.destination}
+                      />
 
-                      <p>
-                        <CalendarDays size={15} />
-                        {formatTripDates(
-                          trip.startDate,
-                          trip.endDate
+                      <div className="tripnest-my-trip-info">
+                        <h3>{trip.title}</h3>
+
+                        <p>
+                          <CalendarDays size={15} />
+                          {formatTripDates(
+                            trip.startDate,
+                            trip.endDate
+                          )}
+                        </p>
+
+                        <p>
+                          <MapPin size={15} />
+                          {trip.destination}
+                        </p>
+
+                        <div className="tripnest-trip-card-meta">
+                          {trip._count?.itinerary !== undefined && (
+                            <span className="tripnest-meta-pill" title="Itinerary Activities">
+                              <Route size={12} /> {trip._count.itinerary} activities
+                            </span>
+                          )}
+                          {trip._count?.packingItems !== undefined && (
+                            <span className="tripnest-meta-pill" title="Packing Items">
+                              <BriefcaseBusiness size={12} /> {trip._count.packingItems} items
+                            </span>
+                          )}
+                          {trip._count?.members !== undefined && trip._count.members > 0 && (
+                            <span className="tripnest-meta-pill" title="Collaborators">
+                              <Users size={12} /> {trip._count.members + 1}
+                            </span>
+                          )}
+                        </div>
+
+                        {progressInfo.type === "ONGOING" && (
+                          <div className="tripnest-trip-progress-bar" title={`${progressInfo.percent}% elapsed`}>
+                            <div
+                              className="tripnest-trip-progress-fill"
+                              style={{ width: `${progressInfo.percent}%` }}
+                            />
+                          </div>
                         )}
-                      </p>
+                      </div>
 
-                      <p>
-                        <MapPin size={15} />
-                        {trip.destination}
-                      </p>
-                    </div>
-
-                    <span className="tripnest-trip-status">
-                      {getTripCategory(trip).charAt(0) +
-                        getTripCategory(trip).slice(1).toLowerCase()}
-                    </span>
-                    <button
-                      type="button"
-                      className="tripnest-trip-action-icon"
-                      onClick={() => handleDuplicateTrip(trip.id)}
-                      title="Duplicate trip"
-                      aria-label={`Duplicate ${trip.title}`}
-                    >
-                      <Copy size={16} />
-                    </button>
-                    <button
-                      type="button"
-                      className="tripnest-trip-delete-icon"
-                      onClick={() => handleDeleteTrip(trip.id)}
-                      title="Delete trip"
-                      aria-label={`Delete ${trip.title}`}
-                    >
-                      <Trash2 size={17} />
-                    </button>
-                  </article>
-                ))
+                      <span className={`tripnest-trip-status ${progressInfo.badgeClass}`}>
+                        {progressInfo.statusText}
+                      </span>
+                      <button
+                        type="button"
+                        className="tripnest-trip-action-icon"
+                        onClick={() => handleDuplicateTrip(trip.id)}
+                        title="Duplicate trip"
+                        aria-label={`Duplicate ${trip.title}`}
+                      >
+                        <Copy size={16} />
+                      </button>
+                      <button
+                        type="button"
+                        className="tripnest-trip-delete-icon"
+                        onClick={() => handleDeleteTrip(trip.id)}
+                        title="Delete trip"
+                        aria-label={`Delete ${trip.title}`}
+                      >
+                        <Trash2 size={17} />
+                      </button>
+                    </article>
+                  );
+                })
               )}
             </div>
             </div>
