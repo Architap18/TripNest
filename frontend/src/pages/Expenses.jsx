@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import {
   ArrowLeft, Plus, Pencil, Trash2, Wallet,
   TrendingUp, Receipt, X, AlertTriangle, CheckCircle2,
-  Calendar, Flame
+  Calendar, Flame, Search, Filter, ArrowUpDown, RotateCcw
 } from "lucide-react";
 import { apiRequest } from "../services/api";
 import "./FeaturePage.css";
@@ -60,6 +60,12 @@ function Expenses() {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(emptyForm);
+
+  const [filterCategory, setFilterCategory] = useState("ALL");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState("date-desc");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
 
   useEffect(() => {
     loadTrips();
@@ -212,6 +218,48 @@ function Expenses() {
 
   const dailyAverage =
     tripDays && summary.totalSpent > 0 ? summary.totalSpent / tripDays : null;
+
+  const filteredExpenses = expenses
+    .filter((item) => {
+      if (filterCategory !== "ALL" && item.category !== filterCategory) return false;
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const matchTitle = item.title?.toLowerCase().includes(q);
+        const matchDesc = item.description?.toLowerCase().includes(q);
+        if (!matchTitle && !matchDesc) return false;
+      }
+      if (dateFrom && new Date(item.spentAt) < new Date(dateFrom)) return false;
+      if (dateTo && new Date(item.spentAt) > new Date(dateTo + "T23:59:59")) return false;
+      return true;
+    })
+    .sort((a, b) => {
+      if (sortBy === "date-desc") return new Date(b.spentAt) - new Date(a.spentAt);
+      if (sortBy === "date-asc") return new Date(a.spentAt) - new Date(b.spentAt);
+      if (sortBy === "amount-desc") return Number(b.amount) - Number(a.amount);
+      if (sortBy === "amount-asc") return Number(a.amount) - Number(b.amount);
+      if (sortBy === "title-asc") return (a.title || "").localeCompare(b.title || "");
+      return 0;
+    });
+
+  const filteredTotal = filteredExpenses.reduce(
+    (sum, item) => sum + Number(item.amount),
+    0
+  );
+
+  const hasActiveFilters =
+    filterCategory !== "ALL" ||
+    searchQuery.trim() !== "" ||
+    dateFrom !== "" ||
+    dateTo !== "" ||
+    sortBy !== "date-desc";
+
+  const resetFilters = () => {
+    setFilterCategory("ALL");
+    setSearchQuery("");
+    setDateFrom("");
+    setDateTo("");
+    setSortBy("date-desc");
+  };
 
   return (
     <main className="feature-page expenses-page">
@@ -395,11 +443,122 @@ function Expenses() {
             <section className="expense-list-panel">
               <div className="expense-list-heading">
                 <div>
-                  <h2>All expenses</h2>
-                  <p>Your recorded trip costs.</p>
+                  <h2>All Expenses</h2>
+                  <p>Filter, search, and manage your trip transactions.</p>
                 </div>
-                <span>{expenses.length} records</span>
+                <div className="expense-heading-badges">
+                  {hasActiveFilters && (
+                    <span className="expense-subtotal-badge">
+                      Filtered: {formatMoney(filteredTotal, summary.currency)}
+                    </span>
+                  )}
+                  <span className="expense-count-badge">
+                    {filteredExpenses.length} of {expenses.length} records
+                  </span>
+                </div>
               </div>
+
+              {expenses.length > 0 && (
+                <div className="expense-filter-controls">
+                  <div className="expense-filter-row-top">
+                    <div className="expense-search-wrapper">
+                      <Search size={16} className="expense-search-icon" />
+                      <input
+                        type="text"
+                        placeholder="Search by title or notes..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="expense-search-input"
+                      />
+                      {searchQuery && (
+                        <button
+                          type="button"
+                          className="expense-search-clear"
+                          onClick={() => setSearchQuery("")}
+                        >
+                          <X size={14} />
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="expense-sort-wrapper">
+                      <ArrowUpDown size={15} />
+                      <select
+                        value={sortBy}
+                        onChange={(e) => setSortBy(e.target.value)}
+                        className="expense-sort-select"
+                        aria-label="Sort expenses"
+                      >
+                        <option value="date-desc">Date: Newest First</option>
+                        <option value="date-asc">Date: Oldest First</option>
+                        <option value="amount-desc">Amount: High to Low</option>
+                        <option value="amount-asc">Amount: Low to High</option>
+                        <option value="title-asc">Title: A to Z</option>
+                      </select>
+                    </div>
+
+                    <div className="expense-date-filter-group">
+                      <label className="expense-date-label">
+                        From:
+                        <input
+                          type="date"
+                          value={dateFrom}
+                          onChange={(e) => setDateFrom(e.target.value)}
+                          className="expense-date-input"
+                        />
+                      </label>
+                      <label className="expense-date-label">
+                        To:
+                        <input
+                          type="date"
+                          value={dateTo}
+                          onChange={(e) => setDateTo(e.target.value)}
+                          className="expense-date-input"
+                        />
+                      </label>
+                    </div>
+
+                    {hasActiveFilters && (
+                      <button
+                        type="button"
+                        className="expense-reset-btn"
+                        onClick={resetFilters}
+                        title="Reset all filters"
+                      >
+                        <RotateCcw size={14} /> Reset
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="expense-category-filter-chips">
+                    <span className="expense-chip-label">Category:</span>
+                    <button
+                      type="button"
+                      className={`expense-cat-chip ${filterCategory === "ALL" ? "active" : ""}`}
+                      onClick={() => setFilterCategory("ALL")}
+                    >
+                      All ({expenses.length})
+                    </button>
+                    {categories.map((cat) => {
+                      const count = expenses.filter((e) => e.category === cat).length;
+                      return (
+                        <button
+                          key={cat}
+                          type="button"
+                          className={`expense-cat-chip ${filterCategory === cat ? "active" : ""}`}
+                          onClick={() => setFilterCategory(cat)}
+                        >
+                          <span
+                            className="expense-chip-dot"
+                            style={{ backgroundColor: categoryColors[cat] || "#6b7280" }}
+                          />
+                          {cat} {count > 0 && `(${count})`}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               {expenses.length === 0 ? (
                 <div className="feature-empty">
@@ -408,6 +567,15 @@ function Expenses() {
                   <p>Add your first expense to start tracking your budget.</p>
                   <button className="feature-primary" onClick={openAddForm}>
                     <Plus size={16} /> Add Expense
+                  </button>
+                </div>
+              ) : filteredExpenses.length === 0 ? (
+                <div className="feature-empty">
+                  <Filter size={32} />
+                  <h3>No expenses match your filters</h3>
+                  <p>Try adjusting your search query, category, or date range.</p>
+                  <button className="feature-primary" onClick={resetFilters}>
+                    <RotateCcw size={15} /> Clear All Filters
                   </button>
                 </div>
               ) : (
@@ -423,7 +591,7 @@ function Expenses() {
                       </tr>
                     </thead>
                     <tbody>
-                      {expenses.map((expense) => (
+                      {filteredExpenses.map((expense) => (
                         <tr key={expense.id}>
                           <td>
                             <strong>{expense.title}</strong>
