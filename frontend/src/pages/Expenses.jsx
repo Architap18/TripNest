@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowLeft, Plus, Pencil, Trash2, Wallet,
-  TrendingUp, Receipt, X,
+  TrendingUp, Receipt, X, AlertTriangle, CheckCircle2,
+  Calendar, Flame
 } from "lucide-react";
 import { apiRequest } from "../services/api";
 import "./FeaturePage.css";
@@ -182,10 +183,35 @@ function Expenses() {
     return <div className="feature-loading">Loading your trips...</div>;
   }
 
-  const spentPercentage =
+  const rawPercentage =
     summary.budget && summary.budget > 0
-      ? Math.min((summary.totalSpent / summary.budget) * 100, 100)
+      ? (summary.totalSpent / summary.budget) * 100
       : 0;
+  const clampedPercentage = Math.min(rawPercentage, 100);
+  const isOverBudget = summary.budget !== null && summary.totalSpent > summary.budget;
+  const isNearBudget = summary.budget !== null && !isOverBudget && rawPercentage >= 80;
+  const budgetStatus = isOverBudget ? "danger" : isNearBudget ? "warning" : "safe";
+
+  const highestExpense = expenses.length
+    ? expenses.reduce(
+        (max, e) => (Number(e.amount) > Number(max.amount) ? e : max),
+        expenses[0]
+      )
+    : null;
+
+  const tripDays =
+    selectedTrip?.startDate && selectedTrip?.endDate
+      ? Math.max(
+          1,
+          Math.round(
+            (new Date(selectedTrip.endDate) - new Date(selectedTrip.startDate)) /
+              (1000 * 60 * 60 * 24)
+          ) + 1
+        )
+      : null;
+
+  const dailyAverage =
+    tripDays && summary.totalSpent > 0 ? summary.totalSpent / tripDays : null;
 
   return (
     <main className="feature-page expenses-page">
@@ -275,13 +301,93 @@ function Expenses() {
             </div>
 
             {summary.budget !== null && (
-              <section className="expense-budget-panel">
-                <div>
-                  <h2>Budget usage</h2>
-                  <span>{spentPercentage.toFixed(1)}% used</span>
+              <section className={`expense-budget-panel budget-status-${budgetStatus}`}>
+                <div className="expense-budget-header">
+                  <div>
+                    <div className="budget-title-badge-row">
+                      <h2>Budget Utilization</h2>
+                      <span className={`budget-status-pill ${budgetStatus}`}>
+                        {budgetStatus === "danger" && <AlertTriangle size={13} />}
+                        {budgetStatus === "warning" && <AlertTriangle size={13} />}
+                        {budgetStatus === "safe" && <CheckCircle2 size={13} />}
+                        {budgetStatus === "danger"
+                          ? "Over Budget"
+                          : budgetStatus === "warning"
+                          ? "Approaching Limit"
+                          : "On Track"}
+                      </span>
+                    </div>
+                    <p className="budget-subtitle">
+                      {budgetStatus === "danger"
+                        ? `You have exceeded your planned budget by ${formatMoney(summary.totalSpent - summary.budget, summary.currency)}!`
+                        : budgetStatus === "warning"
+                        ? `Caution: You have used ${rawPercentage.toFixed(1)}% of your budget. Only ${formatMoney(summary.remaining, summary.currency)} remaining.`
+                        : `Healthy spending: ${formatMoney(summary.remaining, summary.currency)} (${(100 - rawPercentage).toFixed(1)}%) remaining.`}
+                    </p>
+                  </div>
+                  <div className="budget-percentage-display">
+                    <span className="budget-percentage-num">{rawPercentage.toFixed(1)}%</span>
+                    <span className="budget-percentage-sub">utilized</span>
+                  </div>
                 </div>
-                <div className="expense-progress">
-                  <span style={{ width: `${spentPercentage}%` }} />
+
+                <div className="expense-progress-bar-container">
+                  <div className="expense-progress-track">
+                    <div
+                      className={`expense-progress-fill fill-${budgetStatus}`}
+                      style={{ width: `${clampedPercentage}%` }}
+                    />
+                  </div>
+                  <div className="expense-progress-markers">
+                    <span>0%</span>
+                    <span>50%</span>
+                    <span>80%</span>
+                    <span>100%</span>
+                  </div>
+                </div>
+
+                <div className="budget-intelligence-grid">
+                  <div className="budget-intel-item">
+                    <span className="intel-label">
+                      <Flame size={13} /> Average Daily Spend
+                    </span>
+                    <strong>
+                      {dailyAverage !== null
+                        ? `${formatMoney(dailyAverage, summary.currency)} / day`
+                        : "N/A (Dates missing)"}
+                    </strong>
+                    <small>
+                      {tripDays ? `Across ${tripDays} days trip` : "Add trip dates to view"}
+                    </small>
+                  </div>
+
+                  <div className="budget-intel-item">
+                    <span className="intel-label">
+                      <TrendingUp size={13} /> Peak Expense
+                    </span>
+                    <strong>
+                      {highestExpense
+                        ? formatMoney(highestExpense.amount, summary.currency)
+                        : "None"}
+                    </strong>
+                    <small>
+                      {highestExpense ? highestExpense.title : "No records"}
+                    </small>
+                  </div>
+
+                  <div className="budget-intel-item">
+                    <span className="intel-label">
+                      <Wallet size={13} /> Remaining Safe Pace
+                    </span>
+                    <strong>
+                      {tripDays && summary.remaining > 0
+                        ? `${formatMoney(summary.remaining / tripDays, summary.currency)} / day`
+                        : summary.remaining <= 0
+                        ? "Exhausted"
+                        : "N/A"}
+                    </strong>
+                    <small>To stay within budget</small>
+                  </div>
                 </div>
               </section>
             )}

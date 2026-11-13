@@ -543,26 +543,180 @@
   justify-content: space-between;
 }
 
-.expense-budget-panel > div:first-child span {
-  color: var(--feature-primary);
-  font-size: 12px;
+.expense-budget-panel {
+  margin-top: 24px;
+  padding: 24px;
+  border: 1px solid var(--feature-border);
+  border-radius: 16px;
+  background: white;
+  transition: border-color 0.2s ease;
+}
+
+.expense-budget-panel.budget-status-danger {
+  border-color: #fca5a5;
+  background: linear-gradient(180deg, #fffafa 0%, #ffffff 100%);
+}
+
+.expense-budget-panel.budget-status-warning {
+  border-color: #fde68a;
+  background: linear-gradient(180deg, #fffdfa 0%, #ffffff 100%);
+}
+
+.expense-budget-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.budget-title-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.budget-title-badge-row h2 {
+  margin: 0;
+  font-size: 19px;
   font-weight: 700;
+  color: var(--feature-dark);
 }
 
-.expense-progress {
-  height: 10px;
-  margin-top: 17px;
-  overflow: hidden;
+.budget-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
   border-radius: 20px;
-  background: #eee9f6;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
 }
 
-.expense-progress span {
-  display: block;
+.budget-status-pill.safe {
+  background: #ecfdf5;
+  color: #059669;
+  border: 1px solid #a7f3d0;
+}
+
+.budget-status-pill.warning {
+  background: #fffbeb;
+  color: #d97706;
+  border: 1px solid #fde68a;
+}
+
+.budget-status-pill.danger {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.budget-subtitle {
+  color: var(--feature-muted);
+  font-size: 13px;
+  margin-top: 6px;
+  line-height: 1.4;
+}
+
+.budget-percentage-display {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.budget-percentage-num {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--feature-dark);
+  line-height: 1;
+}
+
+.budget-percentage-sub {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--feature-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 3px;
+}
+
+.expense-progress-bar-container {
+  margin: 20px 0 22px 0;
+}
+
+.expense-progress-track {
+  height: 12px;
+  border-radius: 20px;
+  background: #f1edf7;
+  overflow: hidden;
+  position: relative;
+}
+
+.expense-progress-fill {
   height: 100%;
   border-radius: inherit;
-  background: var(--feature-primary);
-  transition: width 0.3s ease;
+  transition: width 0.4s ease;
+}
+
+.expense-progress-fill.fill-safe {
+  background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+}
+
+.expense-progress-fill.fill-warning {
+  background: linear-gradient(90deg, #f59e0b 0%, #d97706 100%);
+}
+
+.expense-progress-fill.fill-danger {
+  background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%);
+}
+
+.expense-progress-markers {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 5px;
+  font-size: 10px;
+  color: var(--feature-muted);
+  font-weight: 600;
+  padding: 0 2px;
+}
+
+.budget-intelligence-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px dashed var(--feature-border);
+}
+
+.budget-intel-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.budget-intel-item .intel-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--feature-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.budget-intel-item strong {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--feature-dark);
+}
+
+.budget-intel-item small {
+  font-size: 11px;
+  color: var(--feature-muted);
 }
 
 .expense-list-heading > span {
