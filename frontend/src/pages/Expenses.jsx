@@ -17,6 +17,15 @@ const categories = [
   "OTHER",
 ];
 
+const categoryColors = {
+  TRANSPORT: "#3b82f6",
+  ACCOMMODATION: "#8b5cf6",
+  FOOD: "#f97316",
+  ACTIVITIES: "#10b981",
+  SHOPPING: "#ec4899",
+  OTHER: "#6b7280",
+};
+
 const emptyForm = {
   title: "",
   amount: "",
@@ -354,18 +363,79 @@ function Expenses() {
             </section>
 
             <section className="expense-category-panel">
-              <h2>Spending by category</h2>
+              <div className="expense-category-panel-header">
+                <div>
+                  <h2>Spending by category</h2>
+                  <p>Visual breakdown of how your travel budget is distributed.</p>
+                </div>
+                {summary.totalSpent > 0 && (
+                  <span className="expense-total-badge">
+                    Total: {formatMoney(summary.totalSpent, summary.currency)}
+                  </span>
+                )}
+              </div>
+
               {Object.keys(summary.categoryTotals || {}).length === 0 ? (
-                <p>No category data available yet.</p>
+                <p className="expense-no-data">No category data recorded yet.</p>
               ) : (
-                Object.entries(summary.categoryTotals).map(([category, amount]) => (
-                  <div className="expense-category-row" key={category}>
-                    <span>{category}</span>
-                    <strong>
-                      {formatMoney(amount, summary.currency)}
-                    </strong>
+                <>
+                  <div className="expense-category-stacked-bar">
+                    {Object.entries(summary.categoryTotals).map(([cat, amount]) => {
+                      const pct = summary.totalSpent > 0 ? (amount / summary.totalSpent) * 100 : 0;
+                      if (pct <= 0) return null;
+                      return (
+                        <div
+                          key={cat}
+                          className="expense-stacked-segment"
+                          style={{
+                            width: `${pct}%`,
+                            backgroundColor: categoryColors[cat] || "#6b7280",
+                          }}
+                          title={`${cat}: ${formatMoney(amount, summary.currency)} (${pct.toFixed(1)}%)`}
+                        />
+                      );
+                    })}
                   </div>
-                ))
+
+                  <div className="expense-category-cards-grid">
+                    {Object.entries(summary.categoryTotals).map(([category, amount]) => {
+                      const pct =
+                        summary.totalSpent > 0
+                          ? ((amount / summary.totalSpent) * 100).toFixed(1)
+                          : "0.0";
+                      const color = categoryColors[category] || "#6b7280";
+
+                      return (
+                        <div className="expense-category-card" key={category}>
+                          <div className="expense-cat-header">
+                            <span
+                              className="expense-cat-badge"
+                              style={{ borderColor: color, color }}
+                            >
+                              <span
+                                className="expense-cat-dot"
+                                style={{ backgroundColor: color }}
+                              />
+                              {category}
+                            </span>
+                            <span className="expense-cat-pct">{pct}%</span>
+                          </div>
+
+                          <strong className="expense-cat-amount">
+                            {formatMoney(amount, summary.currency)}
+                          </strong>
+
+                          <div className="expense-cat-mini-bar">
+                            <div
+                              className="expense-cat-mini-fill"
+                              style={{ width: `${pct}%`, backgroundColor: color }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
               )}
             </section>
           </>

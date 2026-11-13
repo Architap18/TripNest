@@ -618,6 +618,114 @@
   font-weight: 800;
 }
 
+.expense-category-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.expense-category-panel-header p {
+  color: var(--feature-muted);
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+.expense-total-badge {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--feature-primary);
+  background: #f4efff;
+  padding: 6px 12px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+.expense-category-stacked-bar {
+  display: flex;
+  width: 100%;
+  height: 14px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f0ecf7;
+  margin-bottom: 24px;
+}
+
+.expense-stacked-segment {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.expense-category-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 14px;
+}
+
+.expense-category-card {
+  padding: 16px;
+  background: #fdfcff;
+  border: 1px solid var(--feature-border);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.expense-category-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(64, 38, 151, 0.05);
+}
+
+.expense-cat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.expense-cat-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.expense-cat-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.expense-cat-pct {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--feature-muted);
+}
+
+.expense-cat-amount {
+  font-size: 18px;
+  color: var(--feature-dark);
+  letter-spacing: -0.3px;
+}
+
+.expense-cat-mini-bar {
+  width: 100%;
+  height: 5px;
+  background: #eee8f8;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.expense-cat-mini-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
 .expense-category-row {
   display: flex;
   justify-content: space-between;

@@ -67,7 +67,21 @@ const getExpenses = async (req, res) => {
       return result;
     }, {});
 
+    const categoryBreakdown = Object.entries(categoryTotals)
+      .map(([cat, amount]) => ({
+        category: cat,
+        amount,
+        percentage:
+          totalSpent > 0 ? Number(((amount / totalSpent) * 100).toFixed(1)) : 0,
+      }))
+      .sort((a, b) => b.amount - a.amount);
+
     const budget = trip.budget === null ? null : Number(trip.budget);
+    const utilizationRate =
+      budget && budget > 0
+        ? Number(((totalSpent / budget) * 100).toFixed(1))
+        : null;
+    const isOverBudget = budget !== null ? totalSpent > budget : false;
 
     return res.status(200).json({
       message: "Expenses fetched successfully",
@@ -78,6 +92,9 @@ const getExpenses = async (req, res) => {
         remaining:
           budget === null ? null : budget - totalSpent,
         categoryTotals,
+        categoryBreakdown,
+        utilizationRate,
+        isOverBudget,
         currency: trip.currency,
       },
     });
