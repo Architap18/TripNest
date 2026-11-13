@@ -666,6 +666,116 @@
   font-weight: 800;
 }
 
+.collab-roles-reference {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  background: white;
+  border: 1px solid var(--feature-border);
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.collab-ref-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.collab-ref-item strong {
+  display: block;
+  font-size: 13px;
+  color: var(--feature-dark);
+}
+
+.collab-ref-item p {
+  margin: 3px 0 0;
+  font-size: 11px;
+  color: var(--feature-muted);
+  line-height: 1.4;
+}
+
+.crown-icon {
+  color: #f59e0b;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.editor-icon {
+  color: #10b981;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.viewer-icon {
+  color: #3b82f6;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.collab-search-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.collab-search-icon {
+  position: absolute;
+  left: 10px;
+  color: var(--feature-muted);
+  pointer-events: none;
+}
+
+.collab-search-wrapper input {
+  width: 100%;
+  padding: 8px 28px 8px 32px;
+  border-radius: 8px;
+  border: 1px solid var(--feature-border);
+  background: #faf8fd;
+  font-size: 12px;
+  outline: none;
+}
+
+.collab-search-clear {
+  position: absolute;
+  right: 8px;
+  background: none;
+  border: none;
+  color: var(--feature-muted);
+  cursor: pointer;
+  padding: 2px;
+}
+
+.collab-role-selector {
+  margin-left: auto;
+}
+
+.collab-role-dropdown {
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  border: 1px solid var(--feature-border);
+  background: white;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s;
+}
+
+.collab-role-dropdown.editor {
+  background: #ecfdf5;
+  color: #059669;
+  border-color: #a7f3d0;
+}
+
+.collab-role-dropdown.viewer {
+  background: #eff6ff;
+  color: #2563eb;
+  border-color: #bfdbfe;
+}
+
 /* EXPENSES */
 
 .expense-summary-grid {
