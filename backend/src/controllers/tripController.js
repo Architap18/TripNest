@@ -438,10 +438,99 @@ const deleteTrip = async (req, res) => {
   }
 };
 
+// DUPLICATE TRIP
+const duplicateTrip = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const sourceTrip = await prisma.trip.findFirst({
+      where: {
+        id,
+        OR: [
+          { ownerId: req.user.userId },
+          { members: { some: { userId: req.user.userId } } },
+        ],
+      },
+      include: {
+        itinerary: true,
+        packingItems: true,
+      },
+    });
+
+    if (!sourceTrip) {
+      return res.status(404).json({
+        message: "Trip not found or you do not have permission to duplicate it",
+      });
+    }
+
+    const newTrip = await prisma.trip.create({
+      data: {
+        title: `${sourceTrip.title} (Copy)`.slice(0, 100),
+        destination: sourceTrip.destination,
+        description: sourceTrip.description,
+        coverImage: sourceTrip.coverImage,
+        startDate: sourceTrip.startDate,
+        endDate: sourceTrip.endDate,
+        budget: sourceTrip.budget,
+        currency: sourceTrip.currency,
+        status: "PLANNING",
+        ownerId: req.user.userId,
+      },
+    });
+
+    // Clone itinerary items if any
+    if (sourceTrip.itinerary && sourceTrip.itinerary.length > 0) {
+      await prisma.itineraryItem.createMany({
+        data: sourceTrip.itinerary.map((item) => ({
+          title: item.title,
+          description: item.description,
+          location: item.location,
+          dateTime: item.dateTime,
+          duration: item.duration,
+          category: item.category,
+          sortOrder: item.sortOrder,
+          tripId: newTrip.id,
+          createdById: req.user.userId,
+        })),
+      });
+    }
+
+    // Clone packing items if any (reset packed status)
+    if (sourceTrip.packingItems && sourceTrip.packingItems.length > 0) {
+      await prisma.packingItem.createMany({
+        data: sourceTrip.packingItems.map((item) => ({
+          name: item.name,
+          category: item.category,
+          isPacked: false,
+          tripId: newTrip.id,
+        })),
+      });
+    }
+
+    await prisma.activity.create({
+      data: {
+        action: "TRIP_DUPLICATED",
+        details: `Duplicated trip "${sourceTrip.title}"`,
+        userId: req.user.userId,
+        tripId: newTrip.id,
+      },
+    });
+
+    return res.status(201).json({
+      message: "Trip duplicated successfully",
+      trip: newTrip,
+    });
+  } catch (error) {
+    console.error("Duplicate trip error:", error);
+    return res.status(500).json({ message: "Could not duplicate trip" });
+  }
+};
+
 module.exports = {
   createTrip,
   getMyTrips,
   getTripById,
   updateTrip,
   deleteTrip,
+  duplicateTrip,
 };

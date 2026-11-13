@@ -21,6 +21,7 @@ import {
   BriefcaseBusiness,
   Users,
   Trash2,
+  Copy,
   Search,
   SlidersHorizontal,
 } from "lucide-react";
@@ -268,6 +269,19 @@ const handleDeleteTrip = async (tripId) => {
     await fetchRecentActivity();
   } catch (error) {
     alert(error.message || "Failed to delete trip.");
+  }
+};
+
+const handleDuplicateTrip = async (tripId) => {
+  try {
+    const data = await apiRequest(`/trips/${tripId}/duplicate`, {
+      method: "POST",
+    });
+
+    setTrips((current) => [data.trip, ...current]);
+    await fetchRecentActivity();
+  } catch (error) {
+    alert(error.message || "Failed to duplicate trip.");
   }
 };
   // CALENDAR STATE
@@ -1040,6 +1054,15 @@ const showAllTrips = () => {
                       {getTripCategory(trip).charAt(0) +
                         getTripCategory(trip).slice(1).toLowerCase()}
                     </span>
+                    <button
+                      type="button"
+                      className="tripnest-trip-action-icon"
+                      onClick={() => handleDuplicateTrip(trip.id)}
+                      title="Duplicate trip"
+                      aria-label={`Duplicate ${trip.title}`}
+                    >
+                      <Copy size={16} />
+                    </button>
                     <button
                       type="button"
                       className="tripnest-trip-delete-icon"

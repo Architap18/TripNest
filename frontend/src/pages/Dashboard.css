@@ -2357,6 +2357,27 @@
     height: 210px;
   }
 }
+.tripnest-trip-action-icon {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e9e2f7;
+  border-radius: 5px;
+  background: #ffffff;
+  color: var(--primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.tripnest-trip-action-icon:hover {
+  background: #f4efff;
+  border-color: #d1bfff;
+  color: var(--primary);
+}
+
 .tripnest-trip-delete-icon {
   width: 36px;
   height: 36px;

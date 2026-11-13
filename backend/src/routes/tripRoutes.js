@@ -10,6 +10,7 @@ const {
   getTripById,
   updateTrip,
   deleteTrip,
+  duplicateTrip,
 } = require("../controllers/tripController");
 
 // All trip routes require authentication
@@ -19,5 +20,6 @@ router.get("/", authMiddleware, getMyTrips);
 router.get("/:id", authMiddleware, getTripById);
 router.put("/:id", authMiddleware, updateTrip);
 router.delete("/:id", authMiddleware, deleteTrip);
+router.post("/:id/duplicate", authMiddleware, duplicateTrip);
 
 module.exports = router;
