@@ -360,6 +360,7 @@ const handleDuplicateTrip = async (tripId) => {
   const [calendarDate, setCalendarDate] = useState(
     new Date(new Date().getFullYear(), new Date().getMonth(), 1)
   );
+  const [selectedDay, setSelectedDay] = useState(null);
 
   // SAVED DESTINATIONS
 
@@ -581,6 +582,7 @@ const fetchRecentActivity = async () => {
   // CALENDAR FUNCTIONS
 
   const changeMonth = (amount) => {
+    setSelectedDay(null);
     setCalendarDate(
       (current) =>
         new Date(
@@ -590,6 +592,11 @@ const fetchRecentActivity = async () => {
         )
     );
   };
+
+  const isCurrentMonth =
+    new Date().getFullYear() === calendarDate.getFullYear() &&
+    new Date().getMonth() === calendarDate.getMonth();
+  const todayDateNum = isCurrentMonth ? new Date().getDate() : null;
 
   const monthName = calendarDate.toLocaleDateString("en-US", {
     month: "long",
@@ -644,7 +651,17 @@ const fetchRecentActivity = async () => {
       ) {
         calendarEvents[day] = [
           ...(calendarEvents[day] || []),
-          trip.destination,
+          {
+            id: trip.id,
+            title: trip.title,
+            destination: trip.destination,
+            startDate: trip.startDate,
+            endDate: trip.endDate,
+            status: trip.status,
+            budget: trip.budget,
+            currency: trip.currency,
+            coverImage: trip.coverImage,
+          },
         ];
       }
     }
@@ -1338,22 +1355,36 @@ const showAllTrips = () => {
               </div>
 
               <div className="tripnest-calendar-heading">
+                <div className="tripnest-calendar-nav-group">
+                  <button
+                    type="button"
+                    onClick={() => changeMonth(-1)}
+                    aria-label="Previous month"
+                  >
+                    <ChevronLeft size={18} />
+                  </button>
+
+                  <strong>{monthName}</strong>
+
+                  <button
+                    type="button"
+                    onClick={() => changeMonth(1)}
+                    aria-label="Next month"
+                  >
+                    <ChevronRight size={18} />
+                  </button>
+                </div>
+
                 <button
                   type="button"
-                  onClick={() => changeMonth(-1)}
-                  aria-label="Previous month"
+                  className="tripnest-calendar-today-btn"
+                  onClick={() => {
+                    setCalendarDate(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
+                    setSelectedDay(new Date().getDate());
+                  }}
+                  title="Jump to today"
                 >
-                  <ChevronLeft size={18} />
-                </button>
-
-                <strong>{monthName}</strong>
-
-                <button
-                  type="button"
-                  onClick={() => changeMonth(1)}
-                  aria-label="Next month"
-                >
-                  <ChevronRight size={18} />
+                  Today
                 </button>
               </div>
 
@@ -1379,20 +1410,82 @@ const showAllTrips = () => {
                 {Array.from({ length: daysInMonth }).map((_, index) => {
                   const day = index + 1;
                   const events = calendarEvents[day] || [];
+                  const isToday = isCurrentMonth && day === todayDateNum;
+                  const isSelected = day === selectedDay;
 
                   return (
-                    <div
+                    <button
+                      type="button"
                       className={`tripnest-calendar-day ${
                         events.length > 0 ? "has-event" : ""
-                      }`}
+                      } ${isToday ? "is-today" : ""} ${isSelected ? "is-selected" : ""}`}
                       key={day}
-                      title={events.join(", ")}
+                      onClick={() => setSelectedDay(selectedDay === day ? null : day)}
+                      title={events.length > 0 ? events.map((e) => e.destination).join(", ") : undefined}
                     >
                       <span>{day}</span>
-                    </div>
+                      {events.length > 0 && <span className="cal-day-dot" />}
+                    </button>
                   );
                 })}
               </div>
+
+              {selectedDay !== null && (
+                <div className="tripnest-calendar-day-preview">
+                  <div className="cal-preview-header">
+                    <div className="cal-preview-date-title">
+                      <CalendarDays size={14} />
+                      <span>
+                        {new Date(calendarDate.getFullYear(), calendarDate.getMonth(), selectedDay).toLocaleDateString(
+                          "en-US",
+                          { weekday: "short", month: "short", day: "numeric" }
+                        )}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      className="cal-preview-close"
+                      onClick={() => setSelectedDay(null)}
+                      aria-label="Close day preview"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+
+                  {(calendarEvents[selectedDay] || []).length === 0 ? (
+                    <div className="cal-preview-empty">
+                      <p>No trips scheduled for this date.</p>
+                      <button
+                        type="button"
+                        className="cal-preview-plan-btn"
+                        onClick={openCreateTrip}
+                      >
+                        Plan a trip
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="cal-preview-trips-list">
+                      {(calendarEvents[selectedDay] || []).map((trip) => (
+                        <div key={trip.id} className="cal-preview-trip-card">
+                          <div className="cal-preview-trip-info">
+                            <strong>{trip.title}</strong>
+                            <span>{trip.destination}</span>
+                            <small>
+                              {formatTripDates(trip.startDate, trip.endDate)}
+                            </small>
+                          </div>
+                          <Link
+                            to={`/itinerary?tripId=${trip.id}`}
+                            className="cal-preview-itinerary-link"
+                          >
+                            Itinerary <ArrowRight size={12} />
+                          </Link>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </section>
