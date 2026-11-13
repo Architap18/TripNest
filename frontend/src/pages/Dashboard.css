@@ -429,15 +429,6 @@
   gap: 20px;
 }
 
-.tripnest-view-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  color: var(--primary);
-  font-size: 13px;
-  font-weight: 700;
-}
-
 /* QUICK ACTION BAR */
 
 .tripnest-top-workspace {
@@ -1298,11 +1289,6 @@
     gap: 15px;
     padding: 10px 4%;
   }
-
-  .tripnest-search {
-    width: min(400px, 45%);
-  }
-
   .tripnest-top-workspace .tripnest-quick-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     height: auto;
@@ -1331,9 +1317,6 @@
     height: 300px;
   }
 
-  .tripnest-ai-banner {
-    padding: 32px;
-  }
 }
 
 @media (max-width: 650px) {
@@ -1346,13 +1329,6 @@
   .tripnest-brand {
     font-size: 24px;
   }
-
-  .tripnest-search {
-    order: 3;
-    width: 100%;
-    padding: 12px 15px;
-  }
-
   .tripnest-navbar-right {
     gap: 12px;
   }
@@ -1426,10 +1402,6 @@
     margin-left: auto;
   }
 
-  .tripnest-destination-grid {
-    gap: 12px;
-  }
-
   .tripnest-destination-image {
     height: 145px;
   }
@@ -1441,19 +1413,6 @@
   .tripnest-heading-row {
     align-items: flex-start;
     flex-direction: column;
-  }
-
-  .tripnest-ai-banner {
-    min-height: 0;
-    padding: 25px;
-  }
-
-  .tripnest-ai-content h2 {
-    font-size: 23px;
-  }
-
-  .tripnest-ai-decoration {
-    display: none;
   }
 
   .tripnest-footer {
@@ -2270,4 +2229,24 @@
   .tripnest-activity-upcoming-image {
     height: 210px;
   }
+}
+.tripnest-trip-delete-icon {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e9e2f7;
+  border-radius: 5px;
+  background: #ffffff;
+  color: #f10440;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.tripnest-trip-delete-icon:hover {
+  background: #fff0f0;
+  border-color: #f0b5b5;
+  color: #dc4545;
 }

@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Plane,
-  Search,
   Bell,
   ChevronDown,
   ChevronLeft,
@@ -21,6 +20,7 @@ import {
   LoaderCircle,
   BriefcaseBusiness,
   Users,
+  Trash2,
 
 } from "lucide-react";
 
@@ -132,18 +132,21 @@ const destinations = [
     "https://images.unsplash.com/photo-1595815771614-ade9d652a65d?w=700",
 },
 ];
+const parseLocalDate = (dateValue) => {
+  if (!dateValue) return null;
 
-// HELPER FUNCTIONS
+  const date = new Date(dateValue);
 
-const parseLocalDate = (value) => {
-  if (!value) return null;
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
 
-  const dateString = String(value).slice(0, 10);
-  const [year, month, day] = dateString.split("-").map(Number);
-
-  return new Date(year, month - 1, day);
+  return new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate()
+  );
 };
-
 const formatTripDates = (startDate, endDate) => {
   const options = {
     day: "numeric",
@@ -164,13 +167,6 @@ const formatTripDates = (startDate, endDate) => {
 const getTripImage = (trip) => {
   return trip.coverImage || null;
 };
-
-const getStatusLabel = (status) => {
-  if (!status) return "Planning";
-
-  return status.charAt(0) + status.slice(1).toLowerCase();
-};
-
 // DASHBOARD COMPONENT
 const getTimeAgo = (date) => {
   const seconds = Math.floor(
@@ -249,6 +245,27 @@ function Dashboard() {
     }
   };
 }, []);
+const handleDeleteTrip = async (tripId) => {
+  const confirmed = window.confirm(
+    "Are you sure you want to delete this trip? This action cannot be undone."
+  );
+
+  if (!confirmed) return;
+
+  try {
+    await apiRequest(`/trips/${tripId}`, {
+      method: "DELETE",
+    });
+
+    setTrips((current) =>
+      current.filter((trip) => trip.id !== tripId)
+    );
+
+    await fetchRecentActivity();
+  } catch (error) {
+    alert(error.message || "Failed to delete trip.");
+  }
+};
   // CALENDAR STATE
 
   const [calendarDate, setCalendarDate] = useState(
@@ -291,6 +308,15 @@ function Dashboard() {
       setTripsLoading(false);
     }
   };
+// FETCH SAVED DESTINATIONS
+const fetchSavedPlaces = async () => {
+  try {
+    const data = await apiRequest("/saved-places");
+    setSavedDestinations(data.savedPlaces || data.places || []);
+  } catch (error) {
+    console.error("Failed to fetch saved places:", error);
+  }
+};
 // FETCH RECENT ACTIVITY
 const fetchRecentActivity = async () => {
   try {
@@ -311,15 +337,7 @@ const fetchRecentActivity = async () => {
   fetchRecentActivity();
   fetchSavedPlaces();
 }, []);
-// FETCH SAVED DESTINATIONS
-const fetchSavedPlaces = async () => {
-  try {
-    const data = await apiRequest("/saved-places");
-    setSavedDestinations(data.savedPlaces || data.places || []);
-  } catch (error) {
-    console.error("Failed to fetch saved places:", error);
-  }
-};
+
   // FETCH ITINERARY FOR THE FIRST TRIP
 
   useEffect(() => {
@@ -575,34 +593,42 @@ const toggleSaved = async (destination) => {
   }
 };
 
-  // UPCOMING TRIPS
+// UPCOMING TRIPS
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+const today = new Date();
+today.setHours(0, 0, 0, 0);
 
-  const upcomingTrips = trips.filter((trip) => {
-    const endDate = parseLocalDate(trip.endDate);
-    return endDate && endDate >= today;
-  });
+const getTripCategory = (trip) => {
+  const startDate = parseLocalDate(trip.startDate);
+  const endDate = parseLocalDate(trip.endDate);
 
-   const filteredTrips = trips.filter((trip) => {
-  const status = (trip.status || "PLANNING").toUpperCase();
-
-  if (activeTripFilter === "ALL") return true;
-
-  if (activeTripFilter === "UPCOMING") {
-    return status === "UPCOMING";
+  if (!startDate || !endDate) {
+    return "UNKNOWN";
   }
 
-  if (activeTripFilter === "ONGOING") {
-    return status === "ONGOING";
+  if (endDate < today) {
+    return "COMPLETED";
   }
 
-  if (activeTripFilter === "COMPLETED") {
-    return status === "COMPLETED";
+  if (startDate > today) {
+    return "UPCOMING";
   }
 
-  return true;
+  return "ONGOING";
+};
+
+// Upcoming trips only
+const upcomingTrips = trips.filter((trip) => {
+  return getTripCategory(trip) === "UPCOMING";
+});
+
+// Filter trips according to selected tab
+const filteredTrips = trips.filter((trip) => {
+  if (activeTripFilter === "ALL") {
+    return true;
+  }
+
+  return getTripCategory(trip) === activeTripFilter;
 });
 
 const showAllTrips = () => {
@@ -893,8 +919,18 @@ const showAllTrips = () => {
                     </div>
 
                     <span className="tripnest-trip-status">
-                      {getStatusLabel(trip.status)}
+                      {getTripCategory(trip).charAt(0) +
+                        getTripCategory(trip).slice(1).toLowerCase()}
                     </span>
+                    <button
+                      type="button"
+                      className="tripnest-trip-delete-icon"
+                      onClick={() => handleDeleteTrip(trip.id)}
+                      title="Delete trip"
+                      aria-label={`Delete ${trip.title}`}
+                    >
+                      <Trash2 size={17} />
+                    </button>
                   </article>
                 ))
               )}
@@ -992,7 +1028,7 @@ const showAllTrips = () => {
               )}
             </div>
           </div>
-                    {/* RIGHT SIDE: UPCOMING TRIP + CALENDAR */}
+         {/* RIGHT SIDE: UPCOMING TRIP + CALENDAR */}
 
           <div className="tripnest-right-workspace">
 
