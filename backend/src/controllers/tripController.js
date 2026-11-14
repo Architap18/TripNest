@@ -216,8 +216,73 @@ const getTripById = async (req, res) => {
   }
 };
 
+// DELETE TRIP
+const deleteTrip = async (req, res) => {
+  try {
+    const tripId = req.params.tripId || req.params.id;
+
+    if (!tripId) {
+      return res.status(400).json({
+        message: "Trip ID is required",
+      });
+    }
+
+    const trip = await prisma.trip.findUnique({
+      where: {
+        id: tripId,
+      },
+    });
+
+    if (!trip) {
+      return res.status(404).json({
+        message: "Trip not found",
+      });
+    }
+
+    if (trip.ownerId !== req.user.userId) {
+      return res.status(403).json({
+        message: "You are not authorized to delete this trip",
+      });
+    }
+
+    // Clean up any associated document files from blob storage if present
+    try {
+      const documents = await prisma.tripDocument.findMany({
+        where: { tripId },
+        select: { pathname: true },
+      });
+
+      if (documents.length > 0) {
+        const { del } = require("@vercel/blob");
+        await Promise.allSettled(
+          documents.map((doc) => del(doc.pathname, { access: "private" }))
+        );
+      }
+    } catch (blobError) {
+      console.warn("Blob cleanup error during trip deletion:", blobError.message);
+    }
+
+    await prisma.trip.delete({
+      where: {
+        id: tripId,
+      },
+    });
+
+    return res.status(200).json({
+      message: "Trip deleted successfully",
+    });
+  } catch (error) {
+    console.error("Delete trip error:", error);
+
+    return res.status(500).json({
+      message: "Could not delete trip",
+    });
+  }
+};
+
 module.exports = {
   createTrip,
   getMyTrips,
   getTripById,
+  deleteTrip,
 };

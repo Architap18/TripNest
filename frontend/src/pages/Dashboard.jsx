@@ -631,13 +631,6 @@ const filteredTrips = trips.filter((trip) => {
   return getTripCategory(trip) === activeTripFilter;
 });
 
-const showAllTrips = () => {
-  setActiveTripFilter("ALL");
-  document.getElementById("my-trips-section")?.scrollIntoView({
-    behavior: "smooth",
-    block: "center",
-  });
-};
   return (
     <div className="tripnest-dashboard">
 
@@ -833,10 +826,6 @@ const showAllTrips = () => {
             <div className="tripnest-my-trips" id="my-trips-section">
               <div className="tripnest-my-trips-heading">
                 <h2>My Trips</h2>
-
-                <button type="button" onClick={showAllTrips}>
-                  View All <ArrowRight size={16} />
-                </button>
               </div>
 
               <div className="tripnest-trip-filters">
