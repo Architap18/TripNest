@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Plane,
@@ -783,14 +783,6 @@ const filteredTrips = trips
     }
   });
 
-const showAllTrips = () => {
-  setActiveTripFilter("ALL");
-  document.getElementById("my-trips-section")?.scrollIntoView({
-    behavior: "smooth",
-    block: "center",
-  });
-};
-
   const notifications = useMemo(() => {
     const list = [];
     const now = new Date();
@@ -1125,10 +1117,6 @@ const showAllTrips = () => {
             <div className="tripnest-my-trips" id="my-trips-section">
               <div className="tripnest-my-trips-heading">
                 <h2>My Trips</h2>
-
-                <button type="button" onClick={showAllTrips}>
-                  View All <ArrowRight size={16} />
-                </button>
               </div>
 
               <div className="tripnest-trip-search-row">
@@ -1763,7 +1751,7 @@ const showAllTrips = () => {
 
                 <div className="tripnest-activity-list">
 
-                  {activities.map((activity, index) => {
+                  {activities.map((activity) => {
                     const isTrip = activity.action.includes("TRIP");
                     const isMember = activity.action.includes("MEMBER");
 

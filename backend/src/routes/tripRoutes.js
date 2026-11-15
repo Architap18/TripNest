@@ -38,7 +38,9 @@ router.get("/", authMiddleware, getMyTrips);
 // Get a single trip
 router.get("/:id", authMiddleware, getTripById);
 router.put("/:id", authMiddleware, validateTripInput, updateTrip);
+// Delete a trip - supports both :id and :tripId parameter naming
 router.delete("/:id", authMiddleware, deleteTrip);
+router.delete("/:tripId", authMiddleware, deleteTrip);
 router.post("/:id/duplicate", authMiddleware, duplicateTrip);
 
 module.exports = router;

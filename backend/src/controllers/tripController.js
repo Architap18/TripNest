@@ -402,39 +402,77 @@ const updateTrip = async (req, res) => {
 // DELETE TRIP
 const deleteTrip = async (req, res) => {
   try {
-    const { id } = req.params;
+    const tripId = req.params.tripId || req.params.id;
 
-    const trip = await prisma.trip.findFirst({
+    if (!tripId) {
+      return res.status(400).json({
+        message: "Trip ID is required",
+      });
+    }
+
+    const trip = await prisma.trip.findUnique({
       where: {
-        id,
-        ownerId: req.user.userId,
+        id: tripId,
       },
     });
 
     if (!trip) {
       return res.status(404).json({
-        message: "Trip not found or you are not the owner",
+        message: "Trip not found",
       });
     }
 
-    await prisma.trip.delete({
-      where: { id },
-    });
+    if (trip.ownerId !== req.user.userId) {
+      return res.status(403).json({
+        message: "You are not authorized to delete this trip",
+      });
+    }
 
-    await prisma.activity.create({
-      data: {
-        action: "TRIP_DELETED",
-        details: `Deleted trip "${trip.title}"`,
-        userId: req.user.userId,
+    // Clean up any associated document files from blob storage if present
+    try {
+      const documents = await prisma.tripDocument.findMany({
+        where: { tripId },
+        select: { pathname: true },
+      });
+
+      if (documents.length > 0) {
+        const { del } = require("@vercel/blob");
+        await Promise.allSettled(
+          documents.map((doc) => del(doc.pathname, { access: "private" }))
+        );
+      }
+    } catch (blobError) {
+      console.warn("Blob cleanup error during trip deletion:", blobError.message);
+    }
+
+    await prisma.trip.delete({
+      where: {
+        id: tripId,
       },
     });
+
+    // Record activity log for deletion
+    try {
+      await prisma.activity.create({
+        data: {
+          action: "TRIP_DELETED",
+          details: `Deleted trip "${trip.title}"`,
+          userId: req.user.userId,
+        },
+      });
+    } catch (actError) {
+      console.warn("Could not log delete trip activity:", actError.message);
+    }
 
     return res.status(200).json({
       message: "Trip deleted successfully",
     });
   } catch (error) {
     console.error("Delete trip error:", error);
-    return res.status(500).json({ message: "Could not delete trip" });
+
+    return res.status(500).json({
+      message: "Could not delete trip",
+    });
   }
 };
 
