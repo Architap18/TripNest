@@ -202,8 +202,54 @@ const removeMember = async (req, res) => {
   }
 };
 
+// UPDATE MEMBER ROLE
+const updateMemberRole = async (req, res) => {
+  try {
+    const { tripId, memberId } = req.params;
+    const { role } = req.body;
+    const userId = req.user.userId;
+
+    const trip = await prisma.trip.findFirst({
+      where: { id: tripId, ownerId: userId },
+    });
+
+    if (!trip) {
+      return res.status(404).json({
+        message: "Trip not found or only the owner can modify roles",
+      });
+    }
+
+    if (!["EDITOR", "VIEWER"].includes(role)) {
+      return res.status(400).json({
+        message: "Role must be EDITOR or VIEWER",
+      });
+    }
+
+    const member = await prisma.tripMember.update({
+      where: { id: memberId },
+      data: { role },
+      include: {
+        user: {
+          select: { id: true, name: true, email: true },
+        },
+      },
+    });
+
+    return res.status(200).json({
+      message: "Member role updated successfully",
+      member,
+    });
+  } catch (error) {
+    console.error("Update member role error:", error);
+    return res.status(500).json({
+      message: "Could not update member role",
+    });
+  }
+};
+
 module.exports = {
   getMembers,
   inviteMember,
   removeMember,
+  updateMemberRole,
 };

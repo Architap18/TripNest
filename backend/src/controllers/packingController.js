@@ -153,9 +153,97 @@ const deletePackingItem = async (req, res) => {
   }
 };
 
+const addPackingItemsBatch = async (req, res) => {
+  try {
+    const { items } = req.body;
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ message: "An array of items is required" });
+    }
+
+    const trip = await editableTrip(req.params.tripId, req.user.userId);
+    if (!trip) {
+      return res.status(404).json({ message: "Trip not found or you cannot edit it" });
+    }
+
+    const allowedCategories = [
+      "CLOTHING",
+      "TOILETRIES",
+      "DOCUMENTS",
+      "ELECTRONICS",
+      "MEDICINE",
+      "OTHER",
+    ];
+
+    const validItems = items
+      .filter((it) => it && it.name && it.name.trim())
+      .map((it) => ({
+        name: it.name.trim(),
+        category: allowedCategories.includes(it.category) ? it.category : "OTHER",
+        tripId: trip.id,
+      }));
+
+    if (validItems.length === 0) {
+      return res.status(400).json({ message: "No valid items to add" });
+    }
+
+    await prisma.packingItem.createMany({
+      data: validItems,
+    });
+
+    const allItems = await prisma.packingItem.findMany({
+      where: { tripId: trip.id },
+      orderBy: { createdAt: "asc" },
+    });
+
+    return res.status(201).json({
+      message: `${validItems.length} items added successfully`,
+      items: allItems,
+    });
+  } catch (error) {
+    console.error("Batch add packing items error:", error);
+    return res.status(500).json({ message: "Could not add packing items" });
+  }
+};
+
+const batchUpdatePackingItems = async (req, res) => {
+  try {
+    const { isPacked, clearAll } = req.body;
+    const trip = await editableTrip(req.params.tripId, req.user.userId);
+    if (!trip) {
+      return res.status(404).json({ message: "Trip not found or you cannot edit it" });
+    }
+
+    if (clearAll) {
+      await prisma.packingItem.deleteMany({
+        where: { tripId: trip.id },
+      });
+      return res.status(200).json({ message: "All packing items cleared", items: [] });
+    }
+
+    if (isPacked !== undefined) {
+      await prisma.packingItem.updateMany({
+        where: { tripId: trip.id },
+        data: { isPacked: Boolean(isPacked) },
+      });
+    }
+
+    const allItems = await prisma.packingItem.findMany({
+      where: { tripId: trip.id },
+      orderBy: { createdAt: "asc" },
+    });
+
+    return res.status(200).json({ message: "Packing items updated", items: allItems });
+  } catch (error) {
+    console.error("Batch update packing items error:", error);
+    return res.status(500).json({ message: "Could not update packing items" });
+  }
+};
+
 module.exports = {
   getPackingItems,
   addPackingItem,
   updatePackingItem,
   deletePackingItem,
+  addPackingItemsBatch,
+  batchUpdatePackingItems,
 };

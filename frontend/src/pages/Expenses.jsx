@@ -3,9 +3,11 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowLeft, Plus, Pencil, Trash2, Wallet,
-  TrendingUp, Receipt, X,
+  TrendingUp, Receipt, X, AlertTriangle, CheckCircle2,
+  Calendar, Flame, Search, Filter, ArrowUpDown, RotateCcw, Coins
 } from "lucide-react";
 import { apiRequest } from "../services/api";
+import CurrencyConverter from "../components/CurrencyConverter";
 import "./FeaturePage.css";
 
 const categories = [
@@ -16,6 +18,15 @@ const categories = [
   "SHOPPING",
   "OTHER",
 ];
+
+const categoryColors = {
+  TRANSPORT: "#3b82f6",
+  ACCOMMODATION: "#8b5cf6",
+  FOOD: "#f97316",
+  ACTIVITIES: "#10b981",
+  SHOPPING: "#ec4899",
+  OTHER: "#6b7280",
+};
 
 const emptyForm = {
   title: "",
@@ -48,8 +59,15 @@ function Expenses() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [showForm, setShowForm] = useState(false);
+  const [showConverter, setShowConverter] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(emptyForm);
+
+  const [filterCategory, setFilterCategory] = useState("ALL");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState("date-desc");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
 
   useEffect(() => {
     loadTrips();
@@ -173,10 +191,77 @@ function Expenses() {
     return <div className="feature-loading">Loading your trips...</div>;
   }
 
-  const spentPercentage =
+  const rawPercentage =
     summary.budget && summary.budget > 0
-      ? Math.min((summary.totalSpent / summary.budget) * 100, 100)
+      ? (summary.totalSpent / summary.budget) * 100
       : 0;
+  const clampedPercentage = Math.min(rawPercentage, 100);
+  const isOverBudget = summary.budget !== null && summary.totalSpent > summary.budget;
+  const isNearBudget = summary.budget !== null && !isOverBudget && rawPercentage >= 80;
+  const budgetStatus = isOverBudget ? "danger" : isNearBudget ? "warning" : "safe";
+
+  const highestExpense = expenses.length
+    ? expenses.reduce(
+        (max, e) => (Number(e.amount) > Number(max.amount) ? e : max),
+        expenses[0]
+      )
+    : null;
+
+  const tripDays =
+    selectedTrip?.startDate && selectedTrip?.endDate
+      ? Math.max(
+          1,
+          Math.round(
+            (new Date(selectedTrip.endDate) - new Date(selectedTrip.startDate)) /
+              (1000 * 60 * 60 * 24)
+          ) + 1
+        )
+      : null;
+
+  const dailyAverage =
+    tripDays && summary.totalSpent > 0 ? summary.totalSpent / tripDays : null;
+
+  const filteredExpenses = expenses
+    .filter((item) => {
+      if (filterCategory !== "ALL" && item.category !== filterCategory) return false;
+      if (searchQuery.trim()) {
+        const q = searchQuery.toLowerCase();
+        const matchTitle = item.title?.toLowerCase().includes(q);
+        const matchDesc = item.description?.toLowerCase().includes(q);
+        if (!matchTitle && !matchDesc) return false;
+      }
+      if (dateFrom && new Date(item.spentAt) < new Date(dateFrom)) return false;
+      if (dateTo && new Date(item.spentAt) > new Date(dateTo + "T23:59:59")) return false;
+      return true;
+    })
+    .sort((a, b) => {
+      if (sortBy === "date-desc") return new Date(b.spentAt) - new Date(a.spentAt);
+      if (sortBy === "date-asc") return new Date(a.spentAt) - new Date(b.spentAt);
+      if (sortBy === "amount-desc") return Number(b.amount) - Number(a.amount);
+      if (sortBy === "amount-asc") return Number(a.amount) - Number(b.amount);
+      if (sortBy === "title-asc") return (a.title || "").localeCompare(b.title || "");
+      return 0;
+    });
+
+  const filteredTotal = filteredExpenses.reduce(
+    (sum, item) => sum + Number(item.amount),
+    0
+  );
+
+  const hasActiveFilters =
+    filterCategory !== "ALL" ||
+    searchQuery.trim() !== "" ||
+    dateFrom !== "" ||
+    dateTo !== "" ||
+    sortBy !== "date-desc";
+
+  const resetFilters = () => {
+    setFilterCategory("ALL");
+    setSearchQuery("");
+    setDateFrom("");
+    setDateTo("");
+    setSortBy("date-desc");
+  };
 
   return (
     <main className="feature-page expenses-page">
@@ -194,13 +279,23 @@ function Expenses() {
             <h1>Track Expenses</h1>
             <p>Keep your trip budget organized and under control.</p>
           </div>
-          <button
-            className="feature-primary"
-            onClick={openAddForm}
-            disabled={!tripId}
-          >
-            <Plus size={17} /> Add Expense
-          </button>
+          <div className="feature-title-actions">
+            <button
+              type="button"
+              className="feature-secondary-btn"
+              onClick={() => setShowConverter(true)}
+              title="Open Currency Converter"
+            >
+              <Coins size={16} /> Currency Converter
+            </button>
+            <button
+              className="feature-primary"
+              onClick={openAddForm}
+              disabled={!tripId}
+            >
+              <Plus size={17} /> Add Expense
+            </button>
+          </div>
         </div>
 
         <div className="feature-toolbar">
@@ -266,13 +361,93 @@ function Expenses() {
             </div>
 
             {summary.budget !== null && (
-              <section className="expense-budget-panel">
-                <div>
-                  <h2>Budget usage</h2>
-                  <span>{spentPercentage.toFixed(1)}% used</span>
+              <section className={`expense-budget-panel budget-status-${budgetStatus}`}>
+                <div className="expense-budget-header">
+                  <div>
+                    <div className="budget-title-badge-row">
+                      <h2>Budget Utilization</h2>
+                      <span className={`budget-status-pill ${budgetStatus}`}>
+                        {budgetStatus === "danger" && <AlertTriangle size={13} />}
+                        {budgetStatus === "warning" && <AlertTriangle size={13} />}
+                        {budgetStatus === "safe" && <CheckCircle2 size={13} />}
+                        {budgetStatus === "danger"
+                          ? "Over Budget"
+                          : budgetStatus === "warning"
+                          ? "Approaching Limit"
+                          : "On Track"}
+                      </span>
+                    </div>
+                    <p className="budget-subtitle">
+                      {budgetStatus === "danger"
+                        ? `You have exceeded your planned budget by ${formatMoney(summary.totalSpent - summary.budget, summary.currency)}!`
+                        : budgetStatus === "warning"
+                        ? `Caution: You have used ${rawPercentage.toFixed(1)}% of your budget. Only ${formatMoney(summary.remaining, summary.currency)} remaining.`
+                        : `Healthy spending: ${formatMoney(summary.remaining, summary.currency)} (${(100 - rawPercentage).toFixed(1)}%) remaining.`}
+                    </p>
+                  </div>
+                  <div className="budget-percentage-display">
+                    <span className="budget-percentage-num">{rawPercentage.toFixed(1)}%</span>
+                    <span className="budget-percentage-sub">utilized</span>
+                  </div>
                 </div>
-                <div className="expense-progress">
-                  <span style={{ width: `${spentPercentage}%` }} />
+
+                <div className="expense-progress-bar-container">
+                  <div className="expense-progress-track">
+                    <div
+                      className={`expense-progress-fill fill-${budgetStatus}`}
+                      style={{ width: `${clampedPercentage}%` }}
+                    />
+                  </div>
+                  <div className="expense-progress-markers">
+                    <span>0%</span>
+                    <span>50%</span>
+                    <span>80%</span>
+                    <span>100%</span>
+                  </div>
+                </div>
+
+                <div className="budget-intelligence-grid">
+                  <div className="budget-intel-item">
+                    <span className="intel-label">
+                      <Flame size={13} /> Average Daily Spend
+                    </span>
+                    <strong>
+                      {dailyAverage !== null
+                        ? `${formatMoney(dailyAverage, summary.currency)} / day`
+                        : "N/A (Dates missing)"}
+                    </strong>
+                    <small>
+                      {tripDays ? `Across ${tripDays} days trip` : "Add trip dates to view"}
+                    </small>
+                  </div>
+
+                  <div className="budget-intel-item">
+                    <span className="intel-label">
+                      <TrendingUp size={13} /> Peak Expense
+                    </span>
+                    <strong>
+                      {highestExpense
+                        ? formatMoney(highestExpense.amount, summary.currency)
+                        : "None"}
+                    </strong>
+                    <small>
+                      {highestExpense ? highestExpense.title : "No records"}
+                    </small>
+                  </div>
+
+                  <div className="budget-intel-item">
+                    <span className="intel-label">
+                      <Wallet size={13} /> Remaining Safe Pace
+                    </span>
+                    <strong>
+                      {tripDays && summary.remaining > 0
+                        ? `${formatMoney(summary.remaining / tripDays, summary.currency)} / day`
+                        : summary.remaining <= 0
+                        ? "Exhausted"
+                        : "N/A"}
+                    </strong>
+                    <small>To stay within budget</small>
+                  </div>
                 </div>
               </section>
             )}
@@ -280,11 +455,122 @@ function Expenses() {
             <section className="expense-list-panel">
               <div className="expense-list-heading">
                 <div>
-                  <h2>All expenses</h2>
-                  <p>Your recorded trip costs.</p>
+                  <h2>All Expenses</h2>
+                  <p>Filter, search, and manage your trip transactions.</p>
                 </div>
-                <span>{expenses.length} records</span>
+                <div className="expense-heading-badges">
+                  {hasActiveFilters && (
+                    <span className="expense-subtotal-badge">
+                      Filtered: {formatMoney(filteredTotal, summary.currency)}
+                    </span>
+                  )}
+                  <span className="expense-count-badge">
+                    {filteredExpenses.length} of {expenses.length} records
+                  </span>
+                </div>
               </div>
+
+              {expenses.length > 0 && (
+                <div className="expense-filter-controls">
+                  <div className="expense-filter-row-top">
+                    <div className="expense-search-wrapper">
+                      <Search size={16} className="expense-search-icon" />
+                      <input
+                        type="text"
+                        placeholder="Search by title or notes..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="expense-search-input"
+                      />
+                      {searchQuery && (
+                        <button
+                          type="button"
+                          className="expense-search-clear"
+                          onClick={() => setSearchQuery("")}
+                        >
+                          <X size={14} />
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="expense-sort-wrapper">
+                      <ArrowUpDown size={15} />
+                      <select
+                        value={sortBy}
+                        onChange={(e) => setSortBy(e.target.value)}
+                        className="expense-sort-select"
+                        aria-label="Sort expenses"
+                      >
+                        <option value="date-desc">Date: Newest First</option>
+                        <option value="date-asc">Date: Oldest First</option>
+                        <option value="amount-desc">Amount: High to Low</option>
+                        <option value="amount-asc">Amount: Low to High</option>
+                        <option value="title-asc">Title: A to Z</option>
+                      </select>
+                    </div>
+
+                    <div className="expense-date-filter-group">
+                      <label className="expense-date-label">
+                        From:
+                        <input
+                          type="date"
+                          value={dateFrom}
+                          onChange={(e) => setDateFrom(e.target.value)}
+                          className="expense-date-input"
+                        />
+                      </label>
+                      <label className="expense-date-label">
+                        To:
+                        <input
+                          type="date"
+                          value={dateTo}
+                          onChange={(e) => setDateTo(e.target.value)}
+                          className="expense-date-input"
+                        />
+                      </label>
+                    </div>
+
+                    {hasActiveFilters && (
+                      <button
+                        type="button"
+                        className="expense-reset-btn"
+                        onClick={resetFilters}
+                        title="Reset all filters"
+                      >
+                        <RotateCcw size={14} /> Reset
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="expense-category-filter-chips">
+                    <span className="expense-chip-label">Category:</span>
+                    <button
+                      type="button"
+                      className={`expense-cat-chip ${filterCategory === "ALL" ? "active" : ""}`}
+                      onClick={() => setFilterCategory("ALL")}
+                    >
+                      All ({expenses.length})
+                    </button>
+                    {categories.map((cat) => {
+                      const count = expenses.filter((e) => e.category === cat).length;
+                      return (
+                        <button
+                          key={cat}
+                          type="button"
+                          className={`expense-cat-chip ${filterCategory === cat ? "active" : ""}`}
+                          onClick={() => setFilterCategory(cat)}
+                        >
+                          <span
+                            className="expense-chip-dot"
+                            style={{ backgroundColor: categoryColors[cat] || "#6b7280" }}
+                          />
+                          {cat} {count > 0 && `(${count})`}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               {expenses.length === 0 ? (
                 <div className="feature-empty">
@@ -293,6 +579,15 @@ function Expenses() {
                   <p>Add your first expense to start tracking your budget.</p>
                   <button className="feature-primary" onClick={openAddForm}>
                     <Plus size={16} /> Add Expense
+                  </button>
+                </div>
+              ) : filteredExpenses.length === 0 ? (
+                <div className="feature-empty">
+                  <Filter size={32} />
+                  <h3>No expenses match your filters</h3>
+                  <p>Try adjusting your search query, category, or date range.</p>
+                  <button className="feature-primary" onClick={resetFilters}>
+                    <RotateCcw size={15} /> Clear All Filters
                   </button>
                 </div>
               ) : (
@@ -308,7 +603,7 @@ function Expenses() {
                       </tr>
                     </thead>
                     <tbody>
-                      {expenses.map((expense) => (
+                      {filteredExpenses.map((expense) => (
                         <tr key={expense.id}>
                           <td>
                             <strong>{expense.title}</strong>
@@ -354,18 +649,79 @@ function Expenses() {
             </section>
 
             <section className="expense-category-panel">
-              <h2>Spending by category</h2>
+              <div className="expense-category-panel-header">
+                <div>
+                  <h2>Spending by category</h2>
+                  <p>Visual breakdown of how your travel budget is distributed.</p>
+                </div>
+                {summary.totalSpent > 0 && (
+                  <span className="expense-total-badge">
+                    Total: {formatMoney(summary.totalSpent, summary.currency)}
+                  </span>
+                )}
+              </div>
+
               {Object.keys(summary.categoryTotals || {}).length === 0 ? (
-                <p>No category data available yet.</p>
+                <p className="expense-no-data">No category data recorded yet.</p>
               ) : (
-                Object.entries(summary.categoryTotals).map(([category, amount]) => (
-                  <div className="expense-category-row" key={category}>
-                    <span>{category}</span>
-                    <strong>
-                      {formatMoney(amount, summary.currency)}
-                    </strong>
+                <>
+                  <div className="expense-category-stacked-bar">
+                    {Object.entries(summary.categoryTotals).map(([cat, amount]) => {
+                      const pct = summary.totalSpent > 0 ? (amount / summary.totalSpent) * 100 : 0;
+                      if (pct <= 0) return null;
+                      return (
+                        <div
+                          key={cat}
+                          className="expense-stacked-segment"
+                          style={{
+                            width: `${pct}%`,
+                            backgroundColor: categoryColors[cat] || "#6b7280",
+                          }}
+                          title={`${cat}: ${formatMoney(amount, summary.currency)} (${pct.toFixed(1)}%)`}
+                        />
+                      );
+                    })}
                   </div>
-                ))
+
+                  <div className="expense-category-cards-grid">
+                    {Object.entries(summary.categoryTotals).map(([category, amount]) => {
+                      const pct =
+                        summary.totalSpent > 0
+                          ? ((amount / summary.totalSpent) * 100).toFixed(1)
+                          : "0.0";
+                      const color = categoryColors[category] || "#6b7280";
+
+                      return (
+                        <div className="expense-category-card" key={category}>
+                          <div className="expense-cat-header">
+                            <span
+                              className="expense-cat-badge"
+                              style={{ borderColor: color, color }}
+                            >
+                              <span
+                                className="expense-cat-dot"
+                                style={{ backgroundColor: color }}
+                              />
+                              {category}
+                            </span>
+                            <span className="expense-cat-pct">{pct}%</span>
+                          </div>
+
+                          <strong className="expense-cat-amount">
+                            {formatMoney(amount, summary.currency)}
+                          </strong>
+
+                          <div className="expense-cat-mini-bar">
+                            <div
+                              className="expense-cat-mini-fill"
+                              style={{ width: `${pct}%`, backgroundColor: color }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
               )}
             </section>
           </>
@@ -460,6 +816,14 @@ function Expenses() {
           </form>
         </div>
       )}
+
+      <CurrencyConverter
+        isOpen={showConverter}
+        onClose={() => setShowConverter(false)}
+        tripCurrency={summary.currency || "INR"}
+        tripTotalSpent={summary.totalSpent || 0}
+        tripRemaining={summary.remaining}
+      />
     </main>
   );
 }

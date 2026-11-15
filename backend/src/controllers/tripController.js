@@ -134,12 +134,59 @@ const createTrip = async (req, res) => {
 // GET ALL TRIPS
 const getMyTrips = async (req, res) => {
   try {
+    const { search, status, sortBy = "startDate", order = "asc", from, to } = req.query;
+
+    const whereClause = {
+      OR: [
+        { ownerId: req.user.userId },
+        { members: { some: { userId: req.user.userId } } },
+      ],
+    };
+
+    if (search && search.trim()) {
+      const term = search.trim();
+      whereClause.AND = whereClause.AND || [];
+      whereClause.AND.push({
+        OR: [
+          { title: { contains: term, mode: "insensitive" } },
+          { destination: { contains: term, mode: "insensitive" } },
+        ],
+      });
+    }
+
+    if (status && status !== "ALL") {
+      whereClause.AND = whereClause.AND || [];
+      whereClause.AND.push({ status });
+    }
+
+    if (from || to) {
+      whereClause.AND = whereClause.AND || [];
+      const dateFilter = {};
+      if (from && !Number.isNaN(new Date(from).getTime())) dateFilter.gte = new Date(from);
+      if (to && !Number.isNaN(new Date(to).getTime())) dateFilter.lte = new Date(to);
+      if (Object.keys(dateFilter).length > 0) {
+        whereClause.AND.push({ startDate: dateFilter });
+      }
+    }
+
+    const validSortFields = ["startDate", "endDate", "createdAt", "budget", "title"];
+    const sortField = validSortFields.includes(sortBy) ? sortBy : "startDate";
+    const sortOrder = order === "desc" ? "desc" : "asc";
+
     const trips = await prisma.trip.findMany({
-      where: {
-        ownerId: req.user.userId,
+      where: whereClause,
+      include: {
+        _count: {
+          select: {
+            members: true,
+            itinerary: true,
+            expenses: true,
+            packingItems: true,
+          },
+        },
       },
       orderBy: {
-        startDate: "asc",
+        [sortField]: sortOrder,
       },
     });
 
@@ -167,6 +214,16 @@ const getMyTrips = async (req, res) => {
           data: {
             coverImage: image,
           },
+          include: {
+            _count: {
+              select: {
+                members: true,
+                itinerary: true,
+                expenses: true,
+                packingItems: true,
+              },
+            },
+          },
         });
       })
     );
@@ -193,7 +250,19 @@ const getTripById = async (req, res) => {
     const trip = await prisma.trip.findFirst({
       where: {
         id,
-        ownerId: req.user.userId,
+        OR: [
+          { ownerId: req.user.userId },
+          { members: { some: { userId: req.user.userId } } },
+        ],
+      },
+      include: {
+        members: {
+          include: {
+            user: {
+              select: { id: true, name: true, email: true, avatarUrl: true },
+            },
+          },
+        },
       },
     });
 
@@ -213,6 +282,120 @@ const getTripById = async (req, res) => {
     return res.status(500).json({
       message: "Could not fetch trip",
     });
+  }
+};
+
+// UPDATE TRIP
+const updateTrip = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      title,
+      destination,
+      description,
+      coverImage,
+      startDate,
+      endDate,
+      budget,
+      currency,
+      status,
+    } = req.body;
+
+    const existingTrip = await prisma.trip.findFirst({
+      where: {
+        id,
+        OR: [
+          { ownerId: req.user.userId },
+          {
+            members: {
+              some: {
+                userId: req.user.userId,
+                role: "EDITOR",
+              },
+            },
+          },
+        ],
+      },
+    });
+
+    if (!existingTrip) {
+      return res.status(404).json({
+        message: "Trip not found or you do not have permission to edit it",
+      });
+    }
+
+    const updateData = {};
+
+    if (title !== undefined) updateData.title = title.trim();
+    if (description !== undefined) updateData.description = description?.trim() || null;
+    if (currency !== undefined) updateData.currency = currency;
+    if (status !== undefined) updateData.status = status;
+
+    if (startDate) {
+      const parsedStart = new Date(startDate);
+      if (Number.isNaN(parsedStart.getTime())) {
+        return res.status(400).json({ message: "Invalid start date" });
+      }
+      updateData.startDate = parsedStart;
+    }
+
+    if (endDate) {
+      const parsedEnd = new Date(endDate);
+      if (Number.isNaN(parsedEnd.getTime())) {
+        return res.status(400).json({ message: "Invalid end date" });
+      }
+      updateData.endDate = parsedEnd;
+    }
+
+    if (updateData.startDate && updateData.endDate && updateData.endDate < updateData.startDate) {
+      return res.status(400).json({ message: "End date cannot be before start date" });
+    }
+
+    if (budget !== undefined) {
+      if (budget === "" || budget === null) {
+        updateData.budget = null;
+      } else if (!Number.isFinite(Number(budget)) || Number(budget) < 0) {
+        return res.status(400).json({ message: "Budget must be a non-negative number" });
+      } else {
+        updateData.budget = Number(budget);
+      }
+    }
+
+    if (destination !== undefined && destination.trim() !== "") {
+      const cleanDest = destination.trim();
+      updateData.destination = cleanDest;
+
+      if (!coverImage && cleanDest !== existingTrip.destination) {
+        const newImg = await getDestinationImage(cleanDest);
+        if (newImg) updateData.coverImage = newImg;
+      }
+    }
+
+    if (coverImage !== undefined) {
+      updateData.coverImage = coverImage;
+    }
+
+    const updatedTrip = await prisma.trip.update({
+      where: { id },
+      data: updateData,
+    });
+
+    await prisma.activity.create({
+      data: {
+        action: "TRIP_UPDATED",
+        details: `Updated trip "${updatedTrip.title}"`,
+        userId: req.user.userId,
+        tripId: id,
+      },
+    });
+
+    return res.status(200).json({
+      message: "Trip updated successfully",
+      trip: updatedTrip,
+    });
+  } catch (error) {
+    console.error("Update trip error:", error);
+    return res.status(500).json({ message: "Could not update trip" });
   }
 };
 
@@ -268,6 +451,19 @@ const deleteTrip = async (req, res) => {
       },
     });
 
+    // Record activity log for deletion
+    try {
+      await prisma.activity.create({
+        data: {
+          action: "TRIP_DELETED",
+          details: `Deleted trip "${trip.title}"`,
+          userId: req.user.userId,
+        },
+      });
+    } catch (actError) {
+      console.warn("Could not log delete trip activity:", actError.message);
+    }
+
     return res.status(200).json({
       message: "Trip deleted successfully",
     });
@@ -280,9 +476,179 @@ const deleteTrip = async (req, res) => {
   }
 };
 
+// DUPLICATE TRIP
+const duplicateTrip = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const sourceTrip = await prisma.trip.findFirst({
+      where: {
+        id,
+        OR: [
+          { ownerId: req.user.userId },
+          { members: { some: { userId: req.user.userId } } },
+        ],
+      },
+      include: {
+        itinerary: true,
+        packingItems: true,
+      },
+    });
+
+    if (!sourceTrip) {
+      return res.status(404).json({
+        message: "Trip not found or you do not have permission to duplicate it",
+      });
+    }
+
+    const newTrip = await prisma.trip.create({
+      data: {
+        title: `${sourceTrip.title} (Copy)`.slice(0, 100),
+        destination: sourceTrip.destination,
+        description: sourceTrip.description,
+        coverImage: sourceTrip.coverImage,
+        startDate: sourceTrip.startDate,
+        endDate: sourceTrip.endDate,
+        budget: sourceTrip.budget,
+        currency: sourceTrip.currency,
+        status: "PLANNING",
+        ownerId: req.user.userId,
+      },
+    });
+
+    // Clone itinerary items if any
+    if (sourceTrip.itinerary && sourceTrip.itinerary.length > 0) {
+      await prisma.itineraryItem.createMany({
+        data: sourceTrip.itinerary.map((item) => ({
+          title: item.title,
+          description: item.description,
+          location: item.location,
+          dateTime: item.dateTime,
+          duration: item.duration,
+          category: item.category,
+          sortOrder: item.sortOrder,
+          tripId: newTrip.id,
+          createdById: req.user.userId,
+        })),
+      });
+    }
+
+    // Clone packing items if any (reset packed status)
+    if (sourceTrip.packingItems && sourceTrip.packingItems.length > 0) {
+      await prisma.packingItem.createMany({
+        data: sourceTrip.packingItems.map((item) => ({
+          name: item.name,
+          category: item.category,
+          isPacked: false,
+          tripId: newTrip.id,
+        })),
+      });
+    }
+
+    await prisma.activity.create({
+      data: {
+        action: "TRIP_DUPLICATED",
+        details: `Duplicated trip "${sourceTrip.title}"`,
+        userId: req.user.userId,
+        tripId: newTrip.id,
+      },
+    });
+
+    return res.status(201).json({
+      message: "Trip duplicated successfully",
+      trip: newTrip,
+    });
+  } catch (error) {
+    console.error("Duplicate trip error:", error);
+    return res.status(500).json({ message: "Could not duplicate trip" });
+  }
+};
+
+// GET TRIP SUMMARY FOR EXPORT & SHARING
+const getTripSummary = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const trip = await prisma.trip.findFirst({
+      where: {
+        id,
+      },
+      include: {
+        owner: {
+          select: { name: true },
+        },
+        itinerary: {
+          orderBy: { dateTime: "asc" },
+        },
+        expenses: {
+          select: { amount: true, category: true },
+        },
+        packingItems: {
+          select: { isPacked: true, category: true },
+        },
+        _count: {
+          select: { members: true },
+        },
+      },
+    });
+
+    if (!trip) {
+      return res.status(404).json({ message: "Trip not found" });
+    }
+
+    const totalSpent = trip.expenses.reduce(
+      (sum, e) => sum + Number(e.amount),
+      0
+    );
+    const budget = trip.budget !== null ? Number(trip.budget) : null;
+    const remaining = budget !== null ? budget - totalSpent : null;
+
+    const packingTotal = trip.packingItems.length;
+    const packingPacked = trip.packingItems.filter((i) => i.isPacked).length;
+
+    return res.status(200).json({
+      trip: {
+        id: trip.id,
+        title: trip.title,
+        destination: trip.destination,
+        description: trip.description,
+        coverImage: trip.coverImage,
+        startDate: trip.startDate,
+        endDate: trip.endDate,
+        status: trip.status,
+        budget,
+        currency: trip.currency,
+        ownerName: trip.owner.name,
+        collaboratorCount: trip._count.members,
+        itinerary: trip.itinerary,
+        expenseSummary: {
+          totalSpent,
+          budget,
+          remaining,
+          expenseCount: trip.expenses.length,
+        },
+        packingSummary: {
+          total: packingTotal,
+          packed: packingPacked,
+          percentage:
+            packingTotal > 0
+              ? Math.round((packingPacked / packingTotal) * 100)
+              : 0,
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Get trip summary error:", error);
+    return res.status(500).json({ message: "Could not fetch trip summary" });
+  }
+};
+
 module.exports = {
   createTrip,
   getMyTrips,
   getTripById,
+  updateTrip,
   deleteTrip,
+  duplicateTrip,
+  getTripSummary,
 };

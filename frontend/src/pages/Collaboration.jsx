@@ -1,9 +1,17 @@
-
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { Link } from "react-router-dom";
 import {
-  ArrowLeft, UserPlus, Users, Trash2, Mail,
-  ShieldCheck, Eye, Crown,
+  ArrowLeft,
+  UserPlus,
+  Users,
+  Trash2,
+  Mail,
+  ShieldCheck,
+  Eye,
+  Crown,
+  Search,
+  X,
+  Info,
 } from "lucide-react";
 import { apiRequest } from "../services/api";
 import { useAuth } from "../context/AuthContext";
@@ -19,21 +27,15 @@ function Collaboration() {
 
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("VIEWER");
+  const [memberSearch, setMemberSearch] = useState("");
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [updatingRoleId, setUpdatingRoleId] = useState(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  useEffect(() => {
-    loadTrips();
-  }, []);
-
-  useEffect(() => {
-    if (tripId) loadMembers();
-  }, [tripId]);
-
-  const loadTrips = async () => {
+  const loadTrips = useCallback(async () => {
     try {
       setLoading(true);
       const data = await apiRequest("/trips");
@@ -47,9 +49,10 @@ function Collaboration() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const loadMembers = async () => {
+  const loadMembers = useCallback(async () => {
+    if (!tripId) return;
     try {
       setError("");
       const data = await apiRequest(`/collaboration/${tripId}`);
@@ -58,7 +61,15 @@ function Collaboration() {
     } catch (err) {
       setError(err.message);
     }
-  };
+  }, [tripId]);
+
+  useEffect(() => {
+    loadTrips();
+  }, [loadTrips]);
+
+  useEffect(() => {
+    if (tripId) loadMembers();
+  }, [tripId, loadMembers]);
 
   const selectedTrip = trips.find((trip) => trip.id === tripId);
   const isOwner = owner?.id === user?.id;
@@ -87,6 +98,28 @@ function Collaboration() {
     }
   };
 
+  const handleUpdateRole = async (memberId, newRole) => {
+    try {
+      setUpdatingRoleId(memberId);
+      setError("");
+      setSuccess("");
+
+      await apiRequest(`/collaboration/${tripId}/members/${memberId}/role`, {
+        method: "PATCH",
+        body: JSON.stringify({ role: newRole }),
+      });
+
+      setMembers((current) =>
+        current.map((m) => (m.id === memberId ? { ...m, role: newRole } : m))
+      );
+      setSuccess("Member role updated.");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setUpdatingRoleId(null);
+    }
+  };
+
   const handleRemove = async (memberId, memberName) => {
     if (!window.confirm(`Remove ${memberName} from this trip?`)) return;
 
@@ -109,6 +142,17 @@ function Collaboration() {
     }
   };
 
+  const filteredMembers = useMemo(() => {
+    if (!memberSearch.trim()) return members;
+    const q = memberSearch.toLowerCase().trim();
+    return members.filter(
+      (m) =>
+        m.user.name?.toLowerCase().includes(q) ||
+        m.user.email?.toLowerCase().includes(q) ||
+        m.role?.toLowerCase().includes(q)
+    );
+  }, [members, memberSearch]);
+
   if (loading) {
     return <div className="feature-loading">Loading your trips...</div>;
   }
@@ -127,9 +171,9 @@ function Collaboration() {
           <div>
             <span className="feature-eyebrow">TRAVEL TOGETHER</span>
             <h1>Collaborate</h1>
-            <p>Invite people and plan your journey together.</p>
+            <p>Invite friends and plan your group travel together.</p>
           </div>
-          <Users size={42} />
+          <Users size={38} />
         </div>
 
         <div className="feature-toolbar">
@@ -168,14 +212,37 @@ function Collaboration() {
               <Users size={35} />
             </div>
 
+            {/* Role Permissions Reference */}
+            <div className="collab-roles-reference">
+              <div className="collab-ref-item">
+                <Crown size={14} className="crown-icon" />
+                <div>
+                  <strong>Owner</strong>
+                  <p>Trip creator. Can manage members, update trip settings, and delete trip.</p>
+                </div>
+              </div>
+              <div className="collab-ref-item">
+                <ShieldCheck size={14} className="editor-icon" />
+                <div>
+                  <strong>Editor</strong>
+                  <p>Can add & modify itinerary activities, log expenses, and update checklists.</p>
+                </div>
+              </div>
+              <div className="collab-ref-item">
+                <Eye size={14} className="viewer-icon" />
+                <div>
+                  <strong>Viewer</strong>
+                  <p>Read-only access to view the itinerary schedule, budget, and travel plans.</p>
+                </div>
+              </div>
+            </div>
+
             {isOwner && (
               <form className="collaboration-invite" onSubmit={handleInvite}>
                 <div>
                   <span className="feature-eyebrow">GROW YOUR TRAVEL TEAM</span>
                   <h2>Invite a collaborator</h2>
-                  <p>
-                    They must already have a TripNest account.
-                  </p>
+                  <p>They must already have a registered TripNest account.</p>
                 </div>
 
                 <label htmlFor="invite-email">Email address</label>
@@ -197,14 +264,11 @@ function Collaboration() {
                     onChange={(event) => setRole(event.target.value)}
                     aria-label="Member role"
                   >
-                    <option value="VIEWER">Viewer</option>
-                    <option value="EDITOR">Editor</option>
+                    <option value="VIEWER">Viewer (Read-only)</option>
+                    <option value="EDITOR">Editor (Can edit)</option>
                   </select>
 
-                  <button
-                    className="feature-primary"
-                    disabled={submitting}
-                  >
+                  <button className="feature-primary" disabled={submitting}>
                     <UserPlus size={17} />
                     {submitting ? "Adding..." : "Invite"}
                   </button>
@@ -221,6 +285,28 @@ function Collaboration() {
                 <span>{members.length + (owner ? 1 : 0)} people</span>
               </div>
 
+              {members.length > 2 && (
+                <div className="collab-search-wrapper">
+                  <Search size={14} className="collab-search-icon" />
+                  <input
+                    type="text"
+                    placeholder="Search members by name or email..."
+                    value={memberSearch}
+                    onChange={(e) => setMemberSearch(e.target.value)}
+                  />
+                  {memberSearch && (
+                    <button
+                      type="button"
+                      className="collab-search-clear"
+                      onClick={() => setMemberSearch("")}
+                    >
+                      <X size={12} />
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* Owner Display */}
               {owner && (
                 <article className="collaboration-member">
                   <div className="collaboration-avatar">
@@ -228,7 +314,9 @@ function Collaboration() {
                   </div>
 
                   <div className="collaboration-member-info">
-                    <h3>{owner.name} {owner.id === user?.id ? "(You)" : ""}</h3>
+                    <h3>
+                      {owner.name} {owner.id === user?.id ? "(You)" : ""}
+                    </h3>
                     <p>{owner.email}</p>
                   </div>
 
@@ -238,7 +326,8 @@ function Collaboration() {
                 </article>
               )}
 
-              {members.map((member) => (
+              {/* Members Display */}
+              {filteredMembers.map((member) => (
                 <article className="collaboration-member" key={member.id}>
                   <div className="collaboration-avatar">
                     {member.user.name?.charAt(0).toUpperCase()}
@@ -249,14 +338,30 @@ function Collaboration() {
                     <p>{member.user.email}</p>
                   </div>
 
-                  <span className={`collaboration-role ${member.role.toLowerCase()}`}>
-                    {member.role === "EDITOR" ? (
-                      <ShieldCheck size={14} />
-                    ) : (
-                      <Eye size={14} />
-                    )}
-                    {member.role}
-                  </span>
+                  {/* Inline role editor for owner, pill for non-owners */}
+                  {isOwner ? (
+                    <div className="collab-role-selector">
+                      <select
+                        value={member.role}
+                        onChange={(e) => handleUpdateRole(member.id, e.target.value)}
+                        disabled={updatingRoleId === member.id}
+                        aria-label="Change member role"
+                        className={`collab-role-dropdown ${member.role.toLowerCase()}`}
+                      >
+                        <option value="VIEWER">Viewer</option>
+                        <option value="EDITOR">Editor</option>
+                      </select>
+                    </div>
+                  ) : (
+                    <span className={`collaboration-role ${member.role.toLowerCase()}`}>
+                      {member.role === "EDITOR" ? (
+                        <ShieldCheck size={14} />
+                      ) : (
+                        <Eye size={14} />
+                      )}
+                      {member.role}
+                    </span>
+                  )}
 
                   {isOwner && (
                     <button
@@ -274,7 +379,7 @@ function Collaboration() {
                 <div className="feature-empty">
                   <Users size={30} />
                   <h3>You're planning solo</h3>
-                  <p>Invite someone to collaborate on this trip.</p>
+                  <p>Invite friends or family to plan this adventure together.</p>
                 </div>
               )}
             </section>

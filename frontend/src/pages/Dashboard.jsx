@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Plane,
@@ -21,11 +21,15 @@ import {
   BriefcaseBusiness,
   Users,
   Trash2,
-
+  Copy,
+  Search,
+  SlidersHorizontal,
+  Clock,
 } from "lucide-react";
 
 import { useAuth } from "../context/AuthContext";
 import { apiRequest, API_URL } from "../services/api";
+import { TripGridSkeleton } from "../components/SkeletonLoader";
 import "./Dashboard.css";
 
 // HERO CAROUSEL DATA
@@ -164,6 +168,31 @@ const formatTripDates = (startDate, endDate) => {
   return `${formattedStart} – ${formattedEnd}`;
 };
 
+const getTripCountdown = (startDate) => {
+  if (!startDate) return null;
+  const start = parseLocalDate(startDate);
+  if (!start) return null;
+  start.setHours(0, 0, 0, 0);
+
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const diffMs = start.getTime() - today.getTime();
+
+  if (diffMs === 0) {
+    return { isToday: true, label: "Departing Today! 🎉" };
+  }
+  if (diffMs < 0) {
+    return { isPast: true, label: "In Progress" };
+  }
+
+  const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  return {
+    isUpcoming: true,
+    days,
+    label: days === 1 ? "Departs Tomorrow" : `Departs in ${days} days`,
+  };
+};
+
 const getTripImage = (trip) => {
   return trip.coverImage || null;
 };
@@ -186,6 +215,51 @@ const getTimeAgo = (date) => {
 
   return `${days} days ago`;
 };
+
+const getTripProgressInfo = (trip) => {
+  const start = new Date(trip.startDate);
+  const end = new Date(trip.endDate);
+  const now = new Date();
+
+  const startDay = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+  const endDay = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  const totalDays = Math.max(1, Math.round((endDay - startDay) / (1000 * 60 * 60 * 24)) + 1);
+
+  if (today < startDay) {
+    const daysUntil = Math.ceil((startDay - today) / (1000 * 60 * 60 * 24));
+    return {
+      statusText: daysUntil === 1 ? "Starts tomorrow" : `Starts in ${daysUntil}d`,
+      type: "UPCOMING",
+      badgeClass: "badge-upcoming",
+      percent: 0,
+      totalDays,
+    };
+  }
+
+  if (today > endDay) {
+    return {
+      statusText: "Completed",
+      type: "COMPLETED",
+      badgeClass: "badge-completed",
+      percent: 100,
+      totalDays,
+    };
+  }
+
+  const elapsedDays = Math.max(1, Math.round((today - startDay) / (1000 * 60 * 60 * 24)) + 1);
+  const percent = Math.min(100, Math.round((elapsedDays / totalDays) * 100));
+
+  return {
+    statusText: `Day ${elapsedDays} of ${totalDays}`,
+    type: "ONGOING",
+    badgeClass: "badge-ongoing",
+    percent,
+    totalDays,
+  };
+};
+
 function Dashboard() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -193,10 +267,15 @@ function Dashboard() {
   const [activeSlide, setActiveSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [notificationOpen, setNotificationOpen] = useState(false);
+  const [readNotificationIds, setReadNotificationIds] = useState([]);
   const [profileAvatar, setProfileAvatar] = useState("");
 
   const [trips, setTrips] = useState([]);
   const [activeTripFilter, setActiveTripFilter] = useState("ALL");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState("startDate-asc");
+  const [dateRangeFilter, setDateRangeFilter] = useState({ from: "", to: "" });
   const [tripsLoading, setTripsLoading] = useState(true);
   const [tripsError, setTripsError] = useState("");
 
@@ -266,11 +345,25 @@ const handleDeleteTrip = async (tripId) => {
     alert(error.message || "Failed to delete trip.");
   }
 };
+
+const handleDuplicateTrip = async (tripId) => {
+  try {
+    const data = await apiRequest(`/trips/${tripId}/duplicate`, {
+      method: "POST",
+    });
+
+    setTrips((current) => [data.trip, ...current]);
+    await fetchRecentActivity();
+  } catch (error) {
+    alert(error.message || "Failed to duplicate trip.");
+  }
+};
   // CALENDAR STATE
 
   const [calendarDate, setCalendarDate] = useState(
     new Date(new Date().getFullYear(), new Date().getMonth(), 1)
   );
+  const [selectedDay, setSelectedDay] = useState(null);
 
   // SAVED DESTINATIONS
 
@@ -492,6 +585,7 @@ const fetchRecentActivity = async () => {
   // CALENDAR FUNCTIONS
 
   const changeMonth = (amount) => {
+    setSelectedDay(null);
     setCalendarDate(
       (current) =>
         new Date(
@@ -501,6 +595,11 @@ const fetchRecentActivity = async () => {
         )
     );
   };
+
+  const isCurrentMonth =
+    new Date().getFullYear() === calendarDate.getFullYear() &&
+    new Date().getMonth() === calendarDate.getMonth();
+  const todayDateNum = isCurrentMonth ? new Date().getDate() : null;
 
   const monthName = calendarDate.toLocaleDateString("en-US", {
     month: "long",
@@ -555,7 +654,17 @@ const fetchRecentActivity = async () => {
       ) {
         calendarEvents[day] = [
           ...(calendarEvents[day] || []),
-          trip.destination,
+          {
+            id: trip.id,
+            title: trip.title,
+            destination: trip.destination,
+            startDate: trip.startDate,
+            endDate: trip.endDate,
+            status: trip.status,
+            budget: trip.budget,
+            currency: trip.currency,
+            coverImage: trip.coverImage,
+          },
         ];
       }
     }
@@ -622,15 +731,114 @@ const upcomingTrips = trips.filter((trip) => {
   return getTripCategory(trip) === "UPCOMING";
 });
 
-// Filter trips according to selected tab
-const filteredTrips = trips.filter((trip) => {
-  if (activeTripFilter === "ALL") {
+// Filter trips according to selected tab and search query
+const filteredTrips = trips
+  .filter((trip) => {
+    if (activeTripFilter !== "ALL" && getTripCategory(trip) !== activeTripFilter) {
+      return false;
+    }
+
+    if (searchQuery.trim()) {
+      const term = searchQuery.toLowerCase().trim();
+      const matchTitle = trip.title?.toLowerCase().includes(term);
+      const matchDestination = trip.destination?.toLowerCase().includes(term);
+      const matchDescription = trip.description?.toLowerCase().includes(term);
+
+      if (!matchTitle && !matchDestination && !matchDescription) {
+        return false;
+      }
+    }
+
+    if (dateRangeFilter.from) {
+      const fromTime = new Date(dateRangeFilter.from).getTime();
+      const tripStartTime = new Date(trip.startDate).getTime();
+      if (tripStartTime < fromTime) {
+        return false;
+      }
+    }
+
+    if (dateRangeFilter.to) {
+      const toTime = new Date(dateRangeFilter.to).getTime();
+      const tripEndTime = new Date(trip.endDate).getTime();
+      if (tripEndTime > toTime) {
+        return false;
+      }
+    }
+
     return true;
-  }
+  })
+  .sort((a, b) => {
+    switch (sortBy) {
+      case "startDate-desc":
+        return new Date(b.startDate).getTime() - new Date(a.startDate).getTime();
+      case "createdAt-desc":
+        return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+      case "budget-desc":
+        return Number(b.budget || 0) - Number(a.budget || 0);
+      case "budget-asc":
+        return Number(a.budget || 0) - Number(b.budget || 0);
+      case "startDate-asc":
+      default:
+        return new Date(a.startDate).getTime() - new Date(b.startDate).getTime();
+    }
+  });
 
-  return getTripCategory(trip) === activeTripFilter;
-});
+  const notifications = useMemo(() => {
+    const list = [];
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
+    // 1. Departure Reminders
+    trips.forEach((t) => {
+      const start = parseLocalDate(t.startDate);
+      if (start) {
+        start.setHours(0, 0, 0, 0);
+        const diffMs = start.getTime() - today.getTime();
+        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+        if (diffDays === 0) {
+          list.push({
+            id: `dep-today-${t.id}`,
+            type: "DEPARTURE",
+            title: `Trip Departure Today! 🎉`,
+            message: `Your adventure to ${t.destination} starts today. Safe travels!`,
+            time: "Today",
+            link: `/itinerary?tripId=${t.id}`,
+            linkText: "View Itinerary",
+          });
+        } else if (diffDays > 0 && diffDays <= 7) {
+          list.push({
+            id: `dep-soon-${t.id}`,
+            type: "DEPARTURE",
+            title: `Upcoming: ${t.destination}`,
+            message: `Departs in ${diffDays} ${diffDays === 1 ? "day" : "days"}. Don't forget your travel checklist!`,
+            time: `${diffDays}d left`,
+            link: `/packing?tripId=${t.id}`,
+            linkText: "Check Packing",
+          });
+        }
+      }
+    });
+
+    // 2. Recent activities from database
+    (activities || []).slice(0, 4).forEach((act) => {
+      list.push({
+        id: `act-${act.id}`,
+        type: "ACTIVITY",
+        title: act.action.replace(/_/g, " "),
+        message: act.details || `Activity recorded on trip`,
+        time: getTimeAgo(act.createdAt),
+        link: act.tripId ? `/itinerary?tripId=${act.tripId}` : null,
+        linkText: "View Trip",
+      });
+    });
+
+    return list;
+  }, [trips, activities]);
+
+  const unreadCount = notifications.filter(
+    (n) => !readNotificationIds.includes(n.id)
+  ).length;
   return (
     <div className="tripnest-dashboard">
 
@@ -643,13 +851,96 @@ const filteredTrips = trips.filter((trip) => {
             TripNest
           </Link>
           <div className="tripnest-navbar-right">
-            <button
-              className="tripnest-notification"
-              aria-label="Notifications"
-              type="button"
-            >
-              <Bell size={21} />
-            </button>
+            <div className="tripnest-notification-wrapper">
+              <button
+                className="tripnest-notification"
+                aria-label="Notifications"
+                type="button"
+                onClick={() => setNotificationOpen(!notificationOpen)}
+              >
+                <Bell size={21} />
+                {unreadCount > 0 && (
+                  <span className="tripnest-notif-dot">{unreadCount}</span>
+                )}
+              </button>
+
+              {notificationOpen && (
+                <div className="tripnest-notification-menu">
+                  <div className="tripnest-notif-header">
+                    <div className="notif-header-title">
+                      <h3>Notifications</h3>
+                      {unreadCount > 0 && (
+                        <span className="notif-unread-badge">{unreadCount} new</span>
+                      )}
+                    </div>
+                    {notifications.length > 0 && (
+                      <button
+                        type="button"
+                        className="notif-mark-read"
+                        onClick={() =>
+                          setReadNotificationIds(notifications.map((n) => n.id))
+                        }
+                      >
+                        Mark all read
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="tripnest-notif-list">
+                    {notifications.length === 0 ? (
+                      <div className="tripnest-notif-empty">
+                        <Bell size={24} />
+                        <p>You're all caught up!</p>
+                        <small>Departure alerts and trip activities will show up here.</small>
+                      </div>
+                    ) : (
+                      notifications.map((notif) => {
+                        const isRead = readNotificationIds.includes(notif.id);
+                        return (
+                          <div
+                            key={notif.id}
+                            className={`tripnest-notif-item ${
+                              isRead ? "read" : "unread"
+                            }`}
+                            onClick={() => {
+                              if (!isRead) {
+                                setReadNotificationIds((prev) => [...prev, notif.id]);
+                              }
+                            }}
+                          >
+                            <div
+                              className={`notif-icon-wrap ${notif.type.toLowerCase()}`}
+                            >
+                              {notif.type === "DEPARTURE" ? (
+                                <Plane size={15} />
+                              ) : (
+                                <Sparkles size={15} />
+                              )}
+                            </div>
+                            <div className="notif-body">
+                              <div className="notif-item-title-row">
+                                <strong>{notif.title}</strong>
+                                <span className="notif-time">{notif.time}</span>
+                              </div>
+                              <p>{notif.message}</p>
+                              {notif.link && (
+                                <Link
+                                  to={notif.link}
+                                  className="notif-action-link"
+                                  onClick={() => setNotificationOpen(false)}
+                                >
+                                  {notif.linkText} <ArrowRight size={11} />
+                                </Link>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
 
             <div className="tripnest-profile-wrapper">
               <button
@@ -828,6 +1119,29 @@ const filteredTrips = trips.filter((trip) => {
                 <h2>My Trips</h2>
               </div>
 
+              <div className="tripnest-trip-search-row">
+                <div className="tripnest-trip-search-input">
+                  <Search size={16} />
+                  <input
+                    type="text"
+                    placeholder="Search trips by destination or title..."
+                    value={searchQuery}
+                    onChange={(event) => setSearchQuery(event.target.value)}
+                    aria-label="Search trips"
+                  />
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      className="tripnest-search-clear-btn"
+                      onClick={() => setSearchQuery("")}
+                      aria-label="Clear search"
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+              </div>
+
               <div className="tripnest-trip-filters">
                   {[
                     { label: "All Trips", value: "ALL" },
@@ -848,13 +1162,58 @@ const filteredTrips = trips.filter((trip) => {
                   ))}
               </div>
 
+              <div className="tripnest-trip-sort-row">
+                <div className="tripnest-sort-control">
+                  <SlidersHorizontal size={14} />
+                  <label htmlFor="trip-sort-select">Sort:</label>
+                  <select
+                    id="trip-sort-select"
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="tripnest-sort-select"
+                    aria-label="Sort trips"
+                  >
+                    <option value="startDate-asc">Departure: Earliest first</option>
+                    <option value="startDate-desc">Departure: Latest first</option>
+                    <option value="createdAt-desc">Recently Created</option>
+                    <option value="budget-desc">Budget: High to Low</option>
+                    <option value="budget-asc">Budget: Low to High</option>
+                  </select>
+                </div>
+
+                <div className="tripnest-date-filter-control">
+                  <CalendarDays size={14} />
+                  <input
+                    type="date"
+                    value={dateRangeFilter.from}
+                    onChange={(e) => setDateRangeFilter((prev) => ({ ...prev, from: e.target.value }))}
+                    title="From date"
+                    aria-label="Filter from date"
+                  />
+                  <span className="tripnest-date-separator">to</span>
+                  <input
+                    type="date"
+                    value={dateRangeFilter.to}
+                    onChange={(e) => setDateRangeFilter((prev) => ({ ...prev, to: e.target.value }))}
+                    title="To date"
+                    aria-label="Filter to date"
+                  />
+                  {(dateRangeFilter.from || dateRangeFilter.to) && (
+                    <button
+                      type="button"
+                      className="tripnest-clear-date-filter"
+                      onClick={() => setDateRangeFilter({ from: "", to: "" })}
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+              </div>
+
               
           <div className="tripnest-my-trip-list">
               {tripsLoading ? (
-                <div className="tripnest-empty-state">
-                  <LoaderCircle size={27} />
-                  <p>Loading your trips...</p>
-                </div>
+                <TripGridSkeleton count={3} />
               ) : tripsError ? (
                 <div className="tripnest-empty-state">
                   <p className="tripnest-error-message">
@@ -880,48 +1239,87 @@ const filteredTrips = trips.filter((trip) => {
                   <p>There are no trips in this category yet.</p>
                 </div>
               ) : (
-                filteredTrips.map((trip) => (
-                  <article
-                    className="tripnest-my-trip-card"
-                    key={trip.id}
-                  >
-                    <img
-                      src={getTripImage(trip)}
-                      alt={trip.destination}
-                    />
+                filteredTrips.map((trip) => {
+                  const progressInfo = getTripProgressInfo(trip);
 
-                    <div className="tripnest-my-trip-info">
-                      <h3>{trip.title}</h3>
-
-                      <p>
-                        <CalendarDays size={15} />
-                        {formatTripDates(
-                          trip.startDate,
-                          trip.endDate
-                        )}
-                      </p>
-
-                      <p>
-                        <MapPin size={15} />
-                        {trip.destination}
-                      </p>
-                    </div>
-
-                    <span className="tripnest-trip-status">
-                      {getTripCategory(trip).charAt(0) +
-                        getTripCategory(trip).slice(1).toLowerCase()}
-                    </span>
-                    <button
-                      type="button"
-                      className="tripnest-trip-delete-icon"
-                      onClick={() => handleDeleteTrip(trip.id)}
-                      title="Delete trip"
-                      aria-label={`Delete ${trip.title}`}
+                  return (
+                    <article
+                      className="tripnest-my-trip-card"
+                      key={trip.id}
                     >
-                      <Trash2 size={17} />
-                    </button>
-                  </article>
-                ))
+                      <img
+                        src={getTripImage(trip)}
+                        alt={trip.destination}
+                      />
+
+                      <div className="tripnest-my-trip-info">
+                        <h3>{trip.title}</h3>
+
+                        <p>
+                          <CalendarDays size={15} />
+                          {formatTripDates(
+                            trip.startDate,
+                            trip.endDate
+                          )}
+                        </p>
+
+                        <p>
+                          <MapPin size={15} />
+                          {trip.destination}
+                        </p>
+
+                        <div className="tripnest-trip-card-meta">
+                          {trip._count?.itinerary !== undefined && (
+                            <span className="tripnest-meta-pill" title="Itinerary Activities">
+                              <Route size={12} /> {trip._count.itinerary} activities
+                            </span>
+                          )}
+                          {trip._count?.packingItems !== undefined && (
+                            <span className="tripnest-meta-pill" title="Packing Items">
+                              <BriefcaseBusiness size={12} /> {trip._count.packingItems} items
+                            </span>
+                          )}
+                          {trip._count?.members !== undefined && trip._count.members > 0 && (
+                            <span className="tripnest-meta-pill" title="Collaborators">
+                              <Users size={12} /> {trip._count.members + 1}
+                            </span>
+                          )}
+                        </div>
+
+                        {progressInfo.type === "ONGOING" && (
+                          <div className="tripnest-trip-progress-bar" title={`${progressInfo.percent}% elapsed`}>
+                            <div
+                              className="tripnest-trip-progress-fill"
+                              style={{ width: `${progressInfo.percent}%` }}
+                            />
+                          </div>
+                        )}
+                      </div>
+
+                      <span className={`tripnest-trip-status ${progressInfo.badgeClass}`}>
+                        {progressInfo.statusText}
+                      </span>
+                      <button
+                        type="button"
+                        className="tripnest-trip-action-icon"
+                        onClick={() => handleDuplicateTrip(trip.id)}
+                        title="Duplicate trip"
+                        aria-label={`Duplicate ${trip.title}`}
+                      >
+                        <Copy size={16} />
+                      </button>
+                      <button
+                        type="button"
+                        className="tripnest-trip-delete-icon"
+                        onClick={() => handleDeleteTrip(trip.id)}
+                        title="Delete trip"
+                        aria-label={`Delete ${trip.title}`}
+                      >
+                        <Trash2 size={17} />
+                      </button>
+                    </article>
+                  );
+                })
               )}
             </div>
             </div>
@@ -1032,7 +1430,19 @@ const filteredTrips = trips.filter((trip) => {
                   />
 
                   <div className="tripnest-upcoming-overlay">
-                    <span>Upcoming Trip</span>
+                    <div className="tripnest-upcoming-header-row">
+                      <span>Upcoming Trip</span>
+                      {(() => {
+                        const countdown = getTripCountdown(upcomingTrips[0].startDate);
+                        if (!countdown) return null;
+                        return (
+                          <div className={`tripnest-countdown-pill ${countdown.isToday ? "today" : ""}`}>
+                            <Clock size={12} />
+                            <span>{countdown.label}</span>
+                          </div>
+                        );
+                      })()}
+                    </div>
                     <h2>{upcomingTrips[0].destination}</h2>
 
                     <p>
@@ -1073,22 +1483,36 @@ const filteredTrips = trips.filter((trip) => {
               </div>
 
               <div className="tripnest-calendar-heading">
+                <div className="tripnest-calendar-nav-group">
+                  <button
+                    type="button"
+                    onClick={() => changeMonth(-1)}
+                    aria-label="Previous month"
+                  >
+                    <ChevronLeft size={18} />
+                  </button>
+
+                  <strong>{monthName}</strong>
+
+                  <button
+                    type="button"
+                    onClick={() => changeMonth(1)}
+                    aria-label="Next month"
+                  >
+                    <ChevronRight size={18} />
+                  </button>
+                </div>
+
                 <button
                   type="button"
-                  onClick={() => changeMonth(-1)}
-                  aria-label="Previous month"
+                  className="tripnest-calendar-today-btn"
+                  onClick={() => {
+                    setCalendarDate(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
+                    setSelectedDay(new Date().getDate());
+                  }}
+                  title="Jump to today"
                 >
-                  <ChevronLeft size={18} />
-                </button>
-
-                <strong>{monthName}</strong>
-
-                <button
-                  type="button"
-                  onClick={() => changeMonth(1)}
-                  aria-label="Next month"
-                >
-                  <ChevronRight size={18} />
+                  Today
                 </button>
               </div>
 
@@ -1114,20 +1538,82 @@ const filteredTrips = trips.filter((trip) => {
                 {Array.from({ length: daysInMonth }).map((_, index) => {
                   const day = index + 1;
                   const events = calendarEvents[day] || [];
+                  const isToday = isCurrentMonth && day === todayDateNum;
+                  const isSelected = day === selectedDay;
 
                   return (
-                    <div
+                    <button
+                      type="button"
                       className={`tripnest-calendar-day ${
                         events.length > 0 ? "has-event" : ""
-                      }`}
+                      } ${isToday ? "is-today" : ""} ${isSelected ? "is-selected" : ""}`}
                       key={day}
-                      title={events.join(", ")}
+                      onClick={() => setSelectedDay(selectedDay === day ? null : day)}
+                      title={events.length > 0 ? events.map((e) => e.destination).join(", ") : undefined}
                     >
                       <span>{day}</span>
-                    </div>
+                      {events.length > 0 && <span className="cal-day-dot" />}
+                    </button>
                   );
                 })}
               </div>
+
+              {selectedDay !== null && (
+                <div className="tripnest-calendar-day-preview">
+                  <div className="cal-preview-header">
+                    <div className="cal-preview-date-title">
+                      <CalendarDays size={14} />
+                      <span>
+                        {new Date(calendarDate.getFullYear(), calendarDate.getMonth(), selectedDay).toLocaleDateString(
+                          "en-US",
+                          { weekday: "short", month: "short", day: "numeric" }
+                        )}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      className="cal-preview-close"
+                      onClick={() => setSelectedDay(null)}
+                      aria-label="Close day preview"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+
+                  {(calendarEvents[selectedDay] || []).length === 0 ? (
+                    <div className="cal-preview-empty">
+                      <p>No trips scheduled for this date.</p>
+                      <button
+                        type="button"
+                        className="cal-preview-plan-btn"
+                        onClick={openCreateTrip}
+                      >
+                        Plan a trip
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="cal-preview-trips-list">
+                      {(calendarEvents[selectedDay] || []).map((trip) => (
+                        <div key={trip.id} className="cal-preview-trip-card">
+                          <div className="cal-preview-trip-info">
+                            <strong>{trip.title}</strong>
+                            <span>{trip.destination}</span>
+                            <small>
+                              {formatTripDates(trip.startDate, trip.endDate)}
+                            </small>
+                          </div>
+                          <Link
+                            to={`/itinerary?tripId=${trip.id}`}
+                            className="cal-preview-itinerary-link"
+                          >
+                            Itinerary <ArrowRight size={12} />
+                          </Link>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </section>
@@ -1265,7 +1751,7 @@ const filteredTrips = trips.filter((trip) => {
 
                 <div className="tripnest-activity-list">
 
-                  {activities.map((activity, index) => {
+                  {activities.map((activity) => {
                     const isTrip = activity.action.includes("TRIP");
                     const isMember = activity.action.includes("MEMBER");
 
@@ -1355,9 +1841,21 @@ const filteredTrips = trips.filter((trip) => {
 
                   <div className="tripnest-activity-upcoming-info">
 
-                    <span className="tripnest-upcoming-label">
-                      Upcoming Trip
-                    </span>
+                    <div className="tripnest-upcoming-header-row">
+                      <span className="tripnest-upcoming-label">
+                        Upcoming Trip
+                      </span>
+                      {(() => {
+                        const countdown = getTripCountdown(upcomingTrips[0].startDate);
+                        if (!countdown) return null;
+                        return (
+                          <div className={`tripnest-countdown-pill alt ${countdown.isToday ? "today" : ""}`}>
+                            <Clock size={12} />
+                            <span>{countdown.label}</span>
+                          </div>
+                        );
+                      })()}
+                    </div>
 
                     <h2>{upcomingTrips[0].title}</h2>
 

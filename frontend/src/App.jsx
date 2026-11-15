@@ -17,6 +17,8 @@ import Packing from "./pages/Packing";
 import TripNestAI from "./pages/TripNestAI";
 import Profile from "./pages/Profile";
 import SavedPlaces from "./pages/SavedPlaces";
+import SharedTrip from "./pages/SharedTrip";
+import Explore from "./pages/Explore";
 function LoadingScreen() {
   return (
     <div
@@ -121,8 +123,10 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route path="/explore" element={<TripNestAI />} />
+          <Route path="/explore" element={<Explore />} />
+          <Route path="/ai" element={<TripNestAI />} />
           <Route path="/packing" element={<Packing />} />
+          <Route path="/shared/:tripId" element={<SharedTrip />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

@@ -3,6 +3,7 @@ const express = require("express");
 const router = express.Router();
 
 const authMiddleware = require("../middleware/authMiddleware");
+const { validateItineraryInput } = require("../middleware/validationMiddleware");
 
 const {
   getItinerary,
@@ -14,8 +15,8 @@ const {
 router.use(authMiddleware);
 
 router.get("/:tripId", getItinerary);
-router.post("/:tripId", createItineraryItem);
-router.put("/:tripId/:itemId", updateItineraryItem);
+router.post("/:tripId", validateItineraryInput, createItineraryItem);
+router.put("/:tripId/:itemId", validateItineraryInput, updateItineraryItem);
 router.delete("/:tripId/:itemId", deleteItineraryItem);
 
 module.exports = router;
