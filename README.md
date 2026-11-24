@@ -36,11 +36,6 @@ The application focuses on making travel planning simple, organized, and flexibl
 - Print-optimized trip dossier (`/trips/:id/share`) with clean typography and `@media print` styling for PDF generation.
 - Read-only shared trip overview for non-authenticated guests and collaborators.
 
-### 6. Team Collaboration & Role Management
-- Multi-user trip collaboration with email invites.
-- Role management (`VIEWER`, `EDITOR`, `ADMIN`) with backend role update endpoint.
-- Contextual permissions matrix guide for transparent access control.
-
 ### 7. Expense Intelligence & Multi-Currency Analytics
 - Category-wise expense tracking (Transport, Accommodation, Food, Activities, Shopping, Other).
 - Visual stacked progress bar displaying category expenditure distributions.
