@@ -5,19 +5,14 @@ import {
   Trash2,
   Luggage,
   Check,
-  Sparkles,
   CheckCheck,
   RotateCcw,
   X,
   ArrowLeft,
   Search,
-  Layers,
-  ChevronRight,
-  AlertCircle,
   PartyPopper,
 } from "lucide-react";
 import { apiRequest } from "../services/api";
-import { PACKING_TEMPLATES } from "../data/packingTemplates";
 
 const categories = [
   "CLOTHING",
@@ -51,9 +46,6 @@ function Packing({ tripId: propTripId, tripTitle: propTripTitle, destination: pr
   const [error, setError] = useState("");
   const [filterMode, setFilterMode] = useState("ALL"); // ALL, UNPACKED, PACKED
   const [searchQuery, setSearchQuery] = useState("");
-  const [showTemplatesModal, setShowTemplatesModal] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState(PACKING_TEMPLATES[0]);
-  const [importingTemplate, setImportingTemplate] = useState(false);
 
   // If standalone, load all trips
   useEffect(() => {
@@ -179,24 +171,6 @@ function Packing({ tripId: propTripId, tripTitle: propTripTitle, destination: pr
     }
   };
 
-  const handleApplyTemplate = async () => {
-    if (!selectedTemplate || !effectiveTripId) return;
-    try {
-      setImportingTemplate(true);
-      setError("");
-      const data = await apiRequest(`/packing/${effectiveTripId}/batch`, {
-        method: "POST",
-        body: JSON.stringify({ items: selectedTemplate.items }),
-      });
-      setItems(data.items || []);
-      setShowTemplatesModal(false);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setImportingTemplate(false);
-    }
-  };
-
   const packedCount = items.filter((item) => item.isPacked).length;
   const progress = items.length
     ? Math.round((packedCount / items.length) * 100)
@@ -238,16 +212,6 @@ function Packing({ tripId: propTripId, tripTitle: propTripTitle, destination: pr
           <span className="feature-eyebrow">GET READY TO GO</span>
           <h2>Packing Checklist</h2>
           <p>{activeTrip ? `${activeTrip.title} · ${activeTrip.destination}` : "Select a trip"}</p>
-        </div>
-        <div className="packing-top-actions">
-          <button
-            type="button"
-            className="feature-secondary-btn"
-            onClick={() => setShowTemplatesModal(true)}
-            disabled={!effectiveTripId}
-          >
-            <Sparkles size={16} /> Packing Templates
-          </button>
         </div>
       </div>
 
@@ -485,113 +449,10 @@ function Packing({ tripId: propTripId, tripTitle: propTripTitle, destination: pr
         <div className="feature-empty">
           <Luggage size={40} />
           <h3>Your packing checklist is empty</h3>
-          <p>Start from scratch above or choose a curated travel template.</p>
-          <button
-            type="button"
-            className="feature-primary"
-            onClick={() => setShowTemplatesModal(true)}
-          >
-            <Sparkles size={16} /> Choose a Packing Template
-          </button>
+          <p>Add items above to start packing for your trip.</p>
         </div>
       )}
 
-      {/* TEMPLATES MODAL */}
-      {showTemplatesModal && (
-        <div className="currency-modal-backdrop" onClick={() => setShowTemplatesModal(false)}>
-          <div
-            className="currency-modal-content packing-template-modal"
-            onClick={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-          >
-            <div className="currency-modal-header">
-              <div className="currency-header-title-box">
-                <div className="currency-header-icon-wrap">
-                  <Sparkles size={20} />
-                </div>
-                <div>
-                  <h2>Curated Packing Templates</h2>
-                  <p>Choose a trip profile to instantly generate essentials</p>
-                </div>
-              </div>
-              <button
-                type="button"
-                className="currency-modal-close"
-                onClick={() => setShowTemplatesModal(false)}
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            <div className="packing-template-modal-body">
-              <div className="packing-template-nav">
-                {PACKING_TEMPLATES.map((tpl) => (
-                  <button
-                    key={tpl.id}
-                    type="button"
-                    className={`packing-template-tab ${
-                      selectedTemplate.id === tpl.id ? "active" : ""
-                    }`}
-                    onClick={() => setSelectedTemplate(tpl)}
-                  >
-                    <div>
-                      <strong>{tpl.name}</strong>
-                      <small>{tpl.items.length} items</small>
-                    </div>
-                    <span className="tpl-badge">{tpl.badge}</span>
-                  </button>
-                ))}
-              </div>
-
-              <div className="packing-template-preview">
-                <div className="tpl-preview-header">
-                  <div>
-                    <h3>{selectedTemplate.name}</h3>
-                    <p>{selectedTemplate.description}</p>
-                  </div>
-                  <span className="tpl-preview-count">
-                    {selectedTemplate.items.length} items
-                  </span>
-                </div>
-
-                <div className="tpl-items-preview-list">
-                  {selectedTemplate.items.map((it, idx) => (
-                    <div key={idx} className="tpl-preview-item">
-                      <span className="tpl-item-dot" />
-                      <span className="tpl-item-name">{it.name}</span>
-                      <span className="tpl-item-category">
-                        {categoryLabels[it.category] || it.category}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="tpl-preview-actions">
-                  <button
-                    type="button"
-                    className="feature-secondary"
-                    onClick={() => setShowTemplatesModal(false)}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    className="feature-primary"
-                    onClick={handleApplyTemplate}
-                    disabled={importingTemplate}
-                  >
-                    <Sparkles size={16} />
-                    {importingTemplate
-                      ? "Importing..."
-                      : `Import ${selectedTemplate.items.length} Items`}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 

@@ -1,5 +1,7 @@
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
+import { Link } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 import { apiRequest } from "../services/api";
 import "./TripNestAI.css";
 
@@ -15,6 +17,11 @@ function TripNestAI() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const messagesEndRef = useRef(null);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, loading]);
 
   const sendMessage = async (event) => {
     event.preventDefault();
@@ -65,6 +72,9 @@ function TripNestAI() {
             <h1>TripNest AI</h1>
             <p>Let's plan your next adventure together.</p>
           </div>
+          <Link to="/dashboard" className="feature-back" style={{ display: "inline-flex", alignItems: "center", gap: "6px", textDecoration: "none", color: "#666", fontWeight: 500, fontSize: "14px" }}>
+            <ArrowLeft size={18} /> Dashboard
+          </Link>
         </header>
 
         <main className="ai-messages">
@@ -90,6 +100,7 @@ function TripNestAI() {
           )}
 
           {error && <p className="ai-error">{error}</p>}
+          <div ref={messagesEndRef} />
         </main>
 
         <form className="ai-input-form" onSubmit={sendMessage}>

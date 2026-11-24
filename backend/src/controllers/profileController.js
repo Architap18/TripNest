@@ -375,19 +375,24 @@ const getAvatar = async (req, res) => {
     });
 
     if (!user?.avatarUrl) {
-      return res.status(404).json({ message: "No profile picture found" });
+      return res.status(204).end();
     }
 
-    const result = await get(user.avatarUrl, { access: "private" });
+    try {
+      const result = await get(user.avatarUrl, { access: "private" });
 
-    if (!result || result.statusCode !== 200) {
-      return res.status(404).json({ message: "Profile picture not found" });
+      if (!result || result.statusCode !== 200) {
+        return res.status(204).end();
+      }
+
+      res.setHeader("Content-Type", result.blob.contentType);
+      res.setHeader("Cache-Control", "private, max-age=300");
+
+      Readable.fromWeb(result.stream).pipe(res);
+    } catch (blobError) {
+      console.warn("Avatar blob retrieval warning:", blobError.message);
+      return res.status(204).end();
     }
-
-    res.setHeader("Content-Type", result.blob.contentType);
-    res.setHeader("Cache-Control", "private, max-age=300");
-
-    Readable.fromWeb(result.stream).pipe(res);
   } catch (error) {
     console.error("Get avatar error:", error);
     return res.status(500).json({
@@ -453,19 +458,24 @@ const getCover = async (req, res) => {
     });
 
     if (!user?.coverImageUrl) {
-      return res.status(404).json({ message: "No cover image found" });
+      return res.status(204).end();
     }
 
-    const result = await get(user.coverImageUrl, { access: "private" });
+    try {
+      const result = await get(user.coverImageUrl, { access: "private" });
 
-    if (!result || result.statusCode !== 200) {
-      return res.status(404).json({ message: "Cover image not found" });
+      if (!result || result.statusCode !== 200) {
+        return res.status(204).end();
+      }
+
+      res.setHeader("Content-Type", result.blob.contentType);
+      res.setHeader("Cache-Control", "private, max-age=300");
+
+      Readable.fromWeb(result.stream).pipe(res);
+    } catch (blobError) {
+      console.warn("Cover blob retrieval warning:", blobError.message);
+      return res.status(204).end();
     }
-
-    res.setHeader("Content-Type", result.blob.contentType);
-    res.setHeader("Cache-Control", "private, max-age=300");
-
-    Readable.fromWeb(result.stream).pipe(res);
   } catch (error) {
     console.error("Get cover error:", error);
     return res.status(500).json({

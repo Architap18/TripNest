@@ -48,9 +48,6 @@ router.put("/preferences", updatePreferences);
 router.put("/notifications", updateNotifications);
 router.put("/password", changePassword);
 
-router.post("/avatar", upload.single("avatar"), uploadAvatar);
-router.get("/avatar", getAvatar);
-
 router.use((error, req, res, next) => {
   if (error instanceof multer.MulterError) {
     return res.status(400).json({

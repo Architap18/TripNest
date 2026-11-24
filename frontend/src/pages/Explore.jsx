@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import {
   ArrowLeft,
   ArrowRight,
@@ -11,7 +11,6 @@ import {
   Compass,
   Plane,
   X,
-  Check,
 } from "lucide-react";
 import { apiRequest } from "../services/api";
 import "./FeaturePage.css";
@@ -127,7 +126,6 @@ const CATEGORIES = [
 ];
 
 export default function Explore() {
-  const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState("ALL");
   const [searchQuery, setSearchQuery] = useState("");
   const [savedPlaces, setSavedPlaces] = useState([]);

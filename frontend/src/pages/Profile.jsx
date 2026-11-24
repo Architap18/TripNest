@@ -167,9 +167,14 @@ const Profile = () => {
           credentials: "include",
         });
 
-        if (!response.ok) return;
+        if (!response.ok || response.status === 204) return;
+
+        const contentType = response.headers.get("content-type");
+        if (!contentType || !contentType.startsWith("image/")) return;
 
         const blob = await response.blob();
+        if (!blob || blob.size === 0) return;
+
         objectUrl = URL.createObjectURL(blob);
         setAvatar(objectUrl);
       } catch (error) {
@@ -194,9 +199,14 @@ const Profile = () => {
           credentials: "include",
         });
 
-        if (!response.ok) return;
+        if (!response.ok || response.status === 204) return;
+
+        const contentType = response.headers.get("content-type");
+        if (!contentType || !contentType.startsWith("image/")) return;
 
         const blob = await response.blob();
+        if (!blob || blob.size === 0) return;
+
         objectUrl = URL.createObjectURL(blob);
         setCover(objectUrl);
       } catch (error) {

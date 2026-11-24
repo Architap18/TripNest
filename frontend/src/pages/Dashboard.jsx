@@ -306,9 +306,14 @@ function Dashboard() {
         credentials: "include",
       });
 
-      if (!response.ok) return;
+      if (!response.ok || response.status === 204) return;
+
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.startsWith("image/")) return;
 
       const blob = await response.blob();
+      if (!blob || blob.size === 0) return;
+
       objectUrl = URL.createObjectURL(blob);
       setProfileAvatar(objectUrl);
     } catch (error) {
@@ -1894,7 +1899,7 @@ const filteredTrips = trips
         <button
             type="button"
             className="tripnest-floating-ai"
-            onClick={() => navigate("/explore")}
+            onClick={() => navigate("/ai")}
             aria-label="Chat with TripNest AI"
             title="Chat with TripNest AI"
           >
