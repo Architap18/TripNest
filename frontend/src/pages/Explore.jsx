@@ -2,13 +2,13 @@ import { useEffect, useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
+  ArrowRight,
   Search,
   MapPin,
   Bookmark,
   Calendar,
   DollarSign,
   Compass,
-  Sparkles,
   Plane,
   X,
   Check,

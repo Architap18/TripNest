@@ -11,29 +11,6 @@ datasource db {
   provider = "postgresql"
 }
 
-model User {
-  id        String   @id @default(uuid())
-  name      String
-  email     String   @unique
-  password  String
-  phone       String?
-  dateOfBirth DateTime?
-  location    String?
-  avatarUrl   String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  ownedTrips       Trip[]          @relation("TripOwner")
-  tripMemberships  TripMember[]
-  createdItinerary ItineraryItem[]
-  savedPlaces      SavedPlace[]
-  expenses         Expense[]
-  activities       Activity[]
-  uploadedDocuments TripDocument[]
-  preferences           TravelPreference?
-  notificationSettings  NotificationSetting?
-  coverImageUrl String?
-}
 
 enum TripStatus {
   PLANNING
@@ -58,6 +35,28 @@ enum ExpenseCategory {
   OTHER
 }
 
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  phone       String?
+  dateOfBirth DateTime?
+  location    String?
+  avatarUrl   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ownedTrips       Trip[]          @relation("TripOwner")
+  tripMemberships  TripMember[]
+  createdItinerary ItineraryItem[]
+  savedPlaces      SavedPlace[]
+  expenses         Expense[]
+  activities       Activity[]
+  uploadedDocuments TripDocument[]
+  preferences           TravelPreference?
+  notificationSettings  NotificationSetting?
+  coverImageUrl String?
+}
 model Trip {
   id          String     @id @default(uuid())
   title       String
@@ -159,6 +158,7 @@ model Expense {
   @@index([userId])
 }
 
+
 model Activity {
   id        String   @id @default(uuid())
   action    String
@@ -173,6 +173,8 @@ model Activity {
 
   @@index([userId, createdAt])
 }
+
+
 model PackingItem {
   id        String   @id @default(uuid())
   name      String
@@ -186,6 +188,8 @@ model PackingItem {
 
   @@index([tripId])
 }
+
+
 model TripDocument {
   id           String   @id @default(uuid())
   fileName     String
@@ -204,6 +208,7 @@ model TripDocument {
   @@index([tripId])
   @@index([uploadedById])
 }
+
 model TravelPreference {
   id           String   @id @default(uuid())
   travelStyle  String   @default("Adventure")
